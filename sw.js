@@ -1,22 +1,19 @@
-{
-  "name": "لوحة تحكم الإدارة",
-  "short_name": "الآدمن",
-  "id": "./admin.html",
-  "start_url": "./admin.html",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#ffffff",
-  "icons": [
-    {
-      "src": "./icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "./icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
+const CACHE_NAME = 'admin-cache-v14'; // رفعنا رقم الكاش هون
+
+const urlsToCache = [
+  './admin.html',
+  './icon-192.png',  // ضفنا الأيقونة الصغيرة
+  './icon.png',
+  './manifest.json'
+];
+
+self.addEventListener('install', event => {
+  self.skipWaiting(); 
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+// باقي الكود عندك خليه متل ما هو...
