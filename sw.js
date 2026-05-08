@@ -1,13 +1,11 @@
-const CACHE_NAME = 'admin-cache-v17';
+const CACHE_NAME = 'admin-cache-v19';
 
 const urlsToCache = [
   './admin.html',
-  './icon-192.png',
   './icon.png',
   './manifest.json'
 ];
 
-// تثبيت الكاش
 self.addEventListener('install', event => {
   self.skipWaiting(); 
   event.waitUntil(
@@ -17,7 +15,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// تفعيل النسخة الجديدة وحذف القديمة
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -32,7 +29,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// جلب الملفات (هاد اللي كان ناقص ليشتغل التثبيت)
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(response => {
