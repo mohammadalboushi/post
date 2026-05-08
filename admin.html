@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> </title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .admin-box { background: #1e293b; padding: 25px; border-radius: 15px; width: 100%; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        h2 { color: #3b82f6; margin-top: 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        input, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; font-family: inherit; font-size: 1rem; outline: none; }
+        textarea { height: 200px; resize: vertical; line-height: 1.6; }
+        input:focus, textarea:focus { border-color: #3b82f6; }
+        button { padding: 15px; border-radius: 10px; border: none; background: #3b82f6; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        button:active { transform: scale(0.95); }
+        .btn-full { width: 100%; }
+        .btn-danger { background: #ef4444; }
+        .btn-secondary { background: #475569; }
+        
+        /*   */
+        .post-item { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .drag-handle { cursor: grab; color: #94a3b8; font-size: 1.2rem; padding: 0 10px; }
+        .drag-handle:active { cursor: grabbing; }
+        .post-list-info { flex-grow: 1; overflow: hidden; }
+        .post-list-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+        .post-list-date { font-size: 0.8rem; color: #94a3b8; }
+        .action-btns { display: flex; gap: 5px; }
+        .icon-btn { padding: 8px 12px; border-radius: 8px; font-size: 1rem; }
+        
+        #login-section, #editor-section, #list-section { display: none; }
+        
+        /*   */
+        #toast { visibility: hidden; min-width: 250px; background-color: #334155; color: #fff; text-align: center; border-radius: 10px; padding: 15px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; border-right: 4px solid #3b82f6; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /*   (Modal) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-box { background: #1e293b; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box" id="login-section">
+        <h2> </h2>
+        <button class="btn-full" id="loginBtn">  Google</button>
+    </div>
+
+    <div class="admin-box" id="editor-section">
+        <h2>
+            <span id="editorTitle">  </span>
+            <button id="logoutBtn" class="btn-danger" style="padding: 5px 15px; font-size: 0.9rem;"></button>
+        </h2>
+        <input type="text" id="postTitle" placeholder="  ()">
+        <textarea id="postContent" placeholder="  ..."></textarea>
+        
+        <div style="display:flex; gap:10px;">
+            <button id="publishBtn" class="btn-full">  </button>
+            <button id="cancelEditBtn" class="btn-secondary btn-full" style="display:none;"> </button>
+        </div>
+    </div>
+
+    <div class="admin-box" id="list-section">
+        <h3 style="margin-top:0; border-bottom: 1px solid #334155; padding-bottom:10px;">  </h3>
+        <div id="postsList"></div>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="color:#ef4444; margin-top:0;"><i class="fas fa-exclamation-triangle"></i>  </h3>
+            <p style="margin-bottom:20px; color:#cbd5e1;">      .</p>
+            <div style="display:flex; gap:10px;">
+                <button id="confirmDelBtn" class="btn-danger btn-full"></button>
+                <button onclick="closeModal()" class="btn-secondary btn-full"></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB_U4C880PW4GxZd8FALv8yBSiP2mNeBY",
+            authDomain: "malaboushi.firebaseapp.com",
+            databaseURL: "https://malaboushi-default-rtdb.firebaseio.com/",
+            projectId: "malaboushi",
+            storageBucket: "malaboushi.firebasestorage.app",
+            messagingSenderId: "110336819350",
+            appId: "1:110336819350:web:2b1b0488e72b811f0602b7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const myUID = "EFrGJwUdnlZDQ4A7GGIEh2VgoyK2";
+
+        let allPosts = {};
+        let editingPostId = null;
+        let postToDelete = null;
+        let sortableInstance = null;
+
+        window.showToast = (message, type = "normal") => {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.style.borderRightColor = type === "error" ? "#ef4444" : "#10b981";
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.uid === myUID) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('editor-section').style.display = 'block';
+                document.getElementById('list-section').style.display = 'block';
+                loadPosts();
+            } else {
+                document.getElementById('login-section').style.display = 'block';
+                document.getElementById('editor-section').style.display = 'none';
+                document.getElementById('list-section').style.display = 'none';
+            }
+        });
+
+        document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+
+        function loadPosts() {
+            onValue(ref(db, 'posts'), (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('postsList');
+                list.innerHTML = '';
+                allPosts = data || {};
+
+                if (!data) return;
+
+                const postsArray = Object.entries(data).map(([k, v]) => ({ id: k, ...v }))
+                    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                postsArray.forEach(post => {
+                    const dateStr = new Date(post.timestamp).toLocaleDateString('ar-EG');
+                    const div = document.createElement('div');
+                    div.className = 'post-item';
+                    div.setAttribute('data-id', post.id);
+                    
+                    const pinColor = post.isPinned ? '#3b82f6' : '#94a3b8';
+                    
+                    div.innerHTML = `
+                        <i class="fas fa-bars drag-handle"></i>
+                        <div class="post-list-info">
+                            <div class="post-list-title">${post.title || ' '}</div>
+                            <div class="post-list-date">${dateStr}</div>
+                        </div>
+                        <div class="action-btns">
+                            <button class="icon-btn btn-secondary" style="color:${pinColor}" onclick="togglePin('${post.id}', ${post.isPinned})"><i class="fas fa-thumbtack"></i></button>
+                            <button class="icon-btn btn-secondary" onclick="editPost('${post.id}')"><i class="fas fa-pen"></i></button>
+                            <button class="icon-btn btn-danger" onclick="confirmDelete('${post.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+
+                if (sortableInstance) sortableInstance.destroy();
+                sortableInstance = new Sortable(list, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onEnd: () => {
+                        const items = list.querySelectorAll('.post-item');
+                        const updates = {};
+                        items.forEach((item, index) => {
+                            updates[`posts/${item.getAttribute('data-id')}/order`] = index;
+                        });
+                        update(ref(db), updates).then(() => showToast("  ", "success"));
+                    }
+                });
+            });
+        }
+
+        document.getElementById('publishBtn').onclick = () => {
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            if (!content) return showToast(" !", "error");
+
+            if (editingPostId) {
+                update(ref(db, `posts/${editingPostId}`), { title, content }).then(() => {
+                    showToast("   ", "success");
+                    resetEditor();
+                });
+            } else {
+                push(ref(db, 'posts'), {
+                    title, content, timestamp: Date.now(), order: Date.now() * -1, isPinned: false
+                }).then(() => {
+                    showToast("  ", "success");
+                    resetEditor();
+                });
+            }
+        };
+
+        window.editPost = (id) => {
+            editingPostId = id;
+            const post = allPosts[id];
+            document.getElementById('postTitle').value = post.title || '';
+            document.getElementById('postContent').value = post.content;
+            document.getElementById('publishBtn').innerText = "  ";
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            document.getElementById('editorTitle').innerText = " ";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        document.getElementById('cancelEditBtn').onclick = () => resetEditor();
+
+        function resetEditor() {
+            editingPostId = null;
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('publishBtn').innerText = "  ";
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('editorTitle').innerText = "  ";
+        }
+
+        window.togglePin = (id, currentStatus) => {
+            update(ref(db, `posts/${id}`), { isPinned: !currentStatus });
+        };
+
+        window.confirmDelete = (id) => {
+            postToDelete = id;
+            document.getElementById('deleteModal').style.display = 'flex';
+        };
+
+        window.closeModal = () => {
+            document.getElementById('deleteModal').style.display = 'none';
+            postToDelete = null;
+        };
+
+        document.getElementById('confirmDelBtn').onclick = () => {
+            if (postToDelete) {
+                remove(ref(db, `posts/${postToDelete}`)).then(() => {
+                    showToast("  ", "success");
+                    closeModal();
+                    if(editingPostId === postToDelete) resetEditor();
+                });
+            }
+        };
+    </script>
+</body>
+</html>

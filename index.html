@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منشوراتي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { margin: 0; font-weight: 900; color: #1e293b; font-size: 2.2rem; }
+        .header p { color: #64748b; margin-top: 5px; }
+        
+        #posts-container { width: 100%; max-width: 750px; display: flex; flex-direction: column; gap: 25px; }
+        
+        .post-card {
+            background: #ffffff; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 25px; position: relative; transition: transform 0.2s;
+        }
+        .post-card.pinned {
+            border: 2px solid #3b82f6;
+            background: linear-gradient(to bottom, #eff6ff, #ffffff 20%);
+        }
+        
+        .post-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;
+        }
+        .post-info { display: flex; flex-direction: column; gap: 5px; }
+        .post-title { margin: 0; font-size: 1.3rem; font-weight: 900; color: #0f172a; }
+        .post-date { font-size: 0.85rem; color: #94a3b8; }
+        
+        .actions { display: flex; gap: 10px; align-items: center; }
+        .pin-badge {
+            background: #3b82f6; color: white; padding: 5px 12px;
+            border-radius: 50px; font-size: 0.8rem; font-weight: bold;
+        }
+        .copy-btn {
+            background: #f1f5f9; color: #475569; border: none; padding: 8px 15px;
+            border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold;
+            transition: 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .copy-btn:active { transform: scale(0.95); }
+        
+        .post-content {
+            font-size: 1.1rem; line-height: 1.8; color: #334155;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .post-content a { color: #3b82f6; text-decoration: none; font-weight: bold; }
+        .post-content a:hover { text-decoration: underline; }
+        
+        .loading { text-align: center; color: #64748b; font-weight: bold; padding: 40px; }
+        
+        /* نظام الإشعارات */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #1e293b;
+            color: #fff; text-align: center; border-radius: 12px; padding: 15px;
+            position: fixed; z-index: 1000; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-size: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-right: 4px solid #10b981; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>المنشورات</h1>
+        <p>أحدث الأخبار والمقالات</p>
+    </div>
+
+    <div id="posts-container">
+        <div class="loading"><i class="fas fa-circle-notch fa-spin"></i> جاري التحميل...</div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB_U4C880PW4GxZd8FALv8yBSiP2mNeBY",
+            authDomain: "malaboushi.firebaseapp.com",
+            databaseURL: "https://malaboushi-default-rtdb.firebaseio.com/",
+            projectId: "malaboushi",
+            storageBucket: "malaboushi.firebasestorage.app",
+            messagingSenderId: "110336819350",
+            appId: "1:110336819350:web:2b1b0488e72b811f0602b7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const container = document.getElementById('posts-container');
+        const urlRegex = /(https?:\/\/[^\s<]+)/g;
+
+        window.showToast = (message) => {
+            const toast = document.getElementById("toast");
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        };
+
+        window.copyText = (btn, text) => {
+            navigator.clipboard.writeText(decodeURIComponent(text)).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-check" style="color:#10b981;"></i> تم النسخ`;
+                showToast("تم نسخ النص بنجاح");
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            });
+        };
+
+        onValue(ref(db, 'posts'), (snapshot) => {
+            container.innerHTML = '';
+            const data = snapshot.val();
+            
+            if (!data) {
+                container.innerHTML = '<div class="loading">لا توجد منشورات حالياً.</div>';
+                return;
+            }
+
+            const postsArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }))
+                .sort((a, b) => {
+                    if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1;
+                    return (a.order || 0) - (b.order || 0);
+                });
+
+            postsArray.forEach(post => {
+                const dateStr = new Date(post.timestamp).toLocaleString('ar-EG', { dateStyle: 'long', timeStyle: 'short' });
+                const formattedContent = post.content.replace(urlRegex, function(url) {
+                    return `<a href="${url}" target="_blank">${url}</a>`;
+                });
+                
+                // تشفير النص لضمان تمريره لزر النسخ بدون مشاكل
+                const safeRawText = encodeURIComponent(post.content);
+
+                const card = document.createElement('div');
+                card.className = `post-card ${post.isPinned ? 'pinned' : ''}`;
+                card.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-info">
+                            ${post.title ? `<h2 class="post-title">${post.title}</h2>` : ''}
+                            <div class="post-date">${dateStr}</div>
+                        </div>
+                        <div class="actions">
+                            ${post.isPinned ? `<span class="pin-badge"><i class="fas fa-thumbtack"></i> مثبت</span>` : ''}
+                            <button class="copy-btn" onclick="copyText(this, '${safeRawText}')">
+                                <i class="far fa-copy"></i> نسخ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="post-content">${formattedContent}</div>
+                `;
+                container.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
