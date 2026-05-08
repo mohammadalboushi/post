@@ -823,15 +823,18 @@
             <div class="topbar">
                 <div class="topbar-title">إدارة / <span>المنشورات</span></div>
                 <div class="topbar-actions">
-                    <a href="index.html" target="_blank" class="btn btn-ghost">
-                        <i class="fas fa-arrow-up-right-from-square"></i>
-                        الموقع
-                    </a>
-                    <button class="btn btn-ghost" id="logoutTopBtn">
-                        <i class="fas fa-sign-out-alt"></i> خروج
-                    </button>
-                </div>
-            </div>
+    <button class="btn btn-primary" id="installAppBtn" style="display: none;">
+        <i class="fas fa-download"></i> تثبيت التطبيق
+    </button>
+    
+    <a href="index.html" target="_blank" class="btn btn-ghost">
+        <i class="fas fa-arrow-up-right-from-square"></i>
+        الموقع
+    </a>
+    <button class="btn btn-ghost" id="logoutTopBtn">
+        <i class="fas fa-sign-out-alt"></i> خروج
+    </button>
+</div>
 
             <!-- STATS -->
             <div class="stats-strip" id="statsStrip">
@@ -1190,6 +1193,30 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js') 
     .then(() => console.log('Service Worker Registered'))
     .catch((err) => console.log('Service Worker Failed', err));
+}
+// كود التقاط حدث التثبيت وإظهار الزر
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); 
+    deferredPrompt = e; 
+    const installBtn = document.getElementById('installAppBtn');
+    if(installBtn) installBtn.style.display = 'inline-flex'; 
+});
+
+// تشغيل رسالة التثبيت لما نكبس على الزر
+const installBtn = document.getElementById('installAppBtn');
+if(installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt(); 
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                window.showToast('بدأ التثبيت يا كبير...', 'success');
+            }
+            deferredPrompt = null;
+            installBtn.style.display = 'none'; 
+        }
+    });
 }
 </script>
 </body>
