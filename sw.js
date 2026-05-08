@@ -1,12 +1,13 @@
-const CACHE_NAME = 'admin-cache-v14'; // رفعنا رقم الكاش هون
+const CACHE_NAME = 'admin-cache-v15';
 
 const urlsToCache = [
   './admin.html',
-  './icon-192.png',  // ضفنا الأيقونة الصغيرة
+  './icon-192.png',
   './icon.png',
   './manifest.json'
 ];
 
+// تثبيت الكاش
 self.addEventListener('install', event => {
   self.skipWaiting(); 
   event.waitUntil(
@@ -16,4 +17,26 @@ self.addEventListener('install', event => {
   );
 });
 
-// باقي الكود عندك خليه متل ما هو...
+// تفعيل النسخة الجديدة وحذف القديمة
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+// جلب الملفات (هاد اللي كان ناقص ليشتغل التثبيت)
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
+});
