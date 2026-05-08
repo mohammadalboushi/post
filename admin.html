@@ -1186,9 +1186,10 @@
 
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('SW OK'))
-    .catch(err => console.log(err));
+  // التعديل هنا: إضافة نقطة قبل الشرطة
+  navigator.serviceWorker.register('./sw.js') 
+    .then(() => console.log('Service Worker Registered'))
+    .catch((err) => console.log('Service Worker Failed', err));
 }
 </script>
 </body>

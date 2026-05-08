@@ -1,11 +1,11 @@
-const CACHE_NAME = 'admin-panel-v4';
+const CACHE_NAME = 'admin-panel-v6';
 
 const urlsToCache = [
-  '/',
-  '/admin.html',
-  '/manifest.json',
-  '/icon.png',
-  '/icon-192.png'
+  './',
+  './admin.html',
+  './manifest.json',
+  './icon.png',
+  './icon-192.png'
 ];
 
 self.addEventListener('install', event => {
