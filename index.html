@@ -592,6 +592,14 @@
             return text.trim().split(/\s+/).length + ' كلمة';
         }
 
+        function charCount(text) {
+            return text.length + ' حرف';
+        }
+
+        function lineCount(text) {
+            return text.split(/\r\n|\r|\n/).length + ' سطر';
+        }
+
         function formatDate(ts) {
             const d = new Date(ts);
             return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -694,7 +702,11 @@
                     </div>
                     <div class="card-footer">
                         <span class="read-time"><i class="far fa-clock" style="margin-left:4px; font-size:0.7rem;"></i>${readTime(post.content)}</span>
-                        <span class="word-count">${wordCount(post.content)}</span>
+                        <div style="display:flex; gap:12px;">
+                            <span class="word-count" title="عدد السطور"><i class="fas fa-align-justify" style="margin-left:3px; font-size:0.65rem;"></i>${lineCount(post.content)}</span>
+                            <span class="word-count" title="عدد الكلمات"><i class="fas fa-file-word" style="margin-left:3px; font-size:0.65rem;"></i>${wordCount(post.content)}</span>
+                            <span class="word-count" title="عدد الحروف"><i class="fas fa-font" style="margin-left:3px; font-size:0.65rem;"></i>${charCount(post.content)}</span>
+                        </div>
                     </div>
                 `;
                 container.appendChild(card);
