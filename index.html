@@ -37,7 +37,6 @@
             overflow-x: hidden;
         }
 
-        /* Grain texture overlay */
         body::before {
             content: '';
             position: fixed;
@@ -48,7 +47,6 @@
             opacity: 0.4;
         }
 
-        /* ==================== HEADER ==================== */
         header {
             position: sticky;
             top: 0;
@@ -101,7 +99,6 @@
             font-weight: 600;
         }
 
-        /* ==================== HERO ==================== */
         .hero {
             padding: clamp(40px, 8vw, 80px) clamp(16px, 5vw, 80px) clamp(20px, 4vw, 40px);
             max-width: 820px;
@@ -148,7 +145,6 @@
             line-height: 1.6;
         }
 
-        /* ==================== FEED ==================== */
         #posts-container {
             max-width: 820px;
             margin: 0 auto;
@@ -158,7 +154,6 @@
             gap: 16px;
         }
 
-        /* ==================== POST CARD ==================== */
         .post-card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -180,7 +175,6 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Pinned Card */
         .post-card.pinned {
             border-color: transparent;
             background: var(--surface);
@@ -207,7 +201,6 @@
 
         .card-body { padding: 24px 28px 20px; }
 
-        /* Post Meta Row */
         .card-meta {
             display: flex;
             align-items: center;
@@ -241,7 +234,6 @@
             font-weight: 600;
         }
 
-        /* Copy Button */
         .copy-btn {
             display: inline-flex;
             align-items: center;
@@ -271,7 +263,6 @@
 
         .copy-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-        /* Post Title */
         .post-title {
             font-size: 1.15rem;
             font-weight: 900;
@@ -281,7 +272,6 @@
             margin-bottom: 12px;
         }
 
-        /* Post Body */
         .post-content {
             font-size: 0.97rem;
             line-height: 1.85;
@@ -302,7 +292,23 @@
             border-bottom-color: var(--accent);
         }
 
-        /* Divider line after content */
+        /* كود زر قراءة المزيد */
+        .read-more-btn {
+            background: transparent;
+            color: var(--accent);
+            border: none;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .read-more-btn:hover { text-decoration: underline; }
+        .full-text { display: none; }
+        .short-text { display: inline; }
+
         .card-footer {
             border-top: 1px solid var(--border);
             padding: 12px 28px;
@@ -312,19 +318,12 @@
             gap: 8px;
         }
 
-        .read-time {
+        .read-time, .word-count {
             font-size: 0.72rem;
             color: var(--ink-faint);
             font-weight: 600;
         }
 
-        .word-count {
-            font-size: 0.72rem;
-            color: var(--ink-faint);
-            font-weight: 600;
-        }
-
-        /* ==================== EMPTY STATE ==================== */
         .empty-state {
             text-align: center;
             padding: 80px 20px;
@@ -338,7 +337,6 @@
             opacity: 0.3;
         }
 
-        /* ==================== LOADING ==================== */
         .loading-feed {
             display: flex;
             flex-direction: column;
@@ -365,7 +363,6 @@
             50% { opacity: 0.5; }
         }
 
-        /* ==================== TOAST ==================== */
         #toast {
             position: fixed;
             bottom: 32px;
@@ -401,7 +398,6 @@
             border-radius: 50%;
         }
 
-        /* ==================== FOOTER ==================== */
         footer {
             text-align: center;
             padding: 24px;
@@ -410,7 +406,6 @@
             border-top: 1px solid var(--border);
         }
 
-        /* ==================== RESPONSIVE ==================== */
         @media (max-width: 600px) {
             .hero h1 { font-size: 1.9rem; }
             .card-body { padding: 18px 18px 14px; }
@@ -454,13 +449,6 @@
                 <div class="skeleton-line" style="width:95%; height:12px; margin-top:8px;"></div>
                 <div class="skeleton-line" style="width:60%; height:12px;"></div>
             </div>
-            <div class="skeleton-card" style="animation-delay:0.4s">
-                <div class="skeleton-line" style="width:25%; height:10px; margin-bottom:20px;"></div>
-                <div class="skeleton-line" style="width:65%; height:18px;"></div>
-                <div class="skeleton-line" style="width:88%; height:12px; margin-top:8px;"></div>
-                <div class="skeleton-line" style="width:70%; height:12px;"></div>
-                <div class="skeleton-line" style="width:45%; height:12px;"></div>
-            </div>
         </div>
     </div>
 
@@ -487,9 +475,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const container = document.getElementById('posts-container');
-        const urlRegex = /(https?:\/\/[^\s<]+)/g;
+        
+        // مصفوفة عامة لحفظ المنشورات مشان زر النسخ يقدر يقرأها
+        window.allPostsArray = [];
 
-        // Toast
+        // دالة تنظيف النص من الأكواد البرمجية لحماية الصفحة
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // دالة تفعيل الروابط
+        function linkify(escapedStr) {
+            const urlRegex = /(https?:\/\/[^\s<]+)/g;
+            return escapedStr.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+        }
+
         window.showToast = (msg) => {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = msg;
@@ -497,9 +506,12 @@
             setTimeout(() => toast.classList.remove('show'), 2800);
         };
 
-        // Copy
-        window.copyText = (btn, encoded) => {
-            navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+        // دالة النسخ الجديدة اللي بتسحب من الداتا مباشرة بدل الـ HTML
+        window.copyPostText = (id, btn) => {
+            const post = window.allPostsArray.find(p => p.id === id);
+            if(!post) return;
+            
+            navigator.clipboard.writeText(post.content).then(() => {
                 btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> تم النسخ`;
                 btn.classList.add('copied');
                 showToast('تم نسخ النص بنجاح');
@@ -510,7 +522,23 @@
             });
         };
 
-        // Estimate read time
+        // دالة توسيع وطي النص الطويل
+        window.toggleText = (btn) => {
+            const contentDiv = btn.previousElementSibling;
+            const shortText = contentDiv.querySelector('.short-text');
+            const fullText = contentDiv.querySelector('.full-text');
+            
+            if (fullText.style.display === 'none') {
+                shortText.style.display = 'none';
+                fullText.style.display = 'inline';
+                btn.innerText = 'عرض أقل';
+            } else {
+                shortText.style.display = 'inline';
+                fullText.style.display = 'none';
+                btn.innerText = 'قراءة المزيد...';
+            }
+        };
+
         function readTime(text) {
             const words = text.trim().split(/\s+/).length;
             const mins = Math.max(1, Math.round(words / 200));
@@ -521,7 +549,6 @@
             return text.trim().split(/\s+/).length + ' كلمة';
         }
 
-        // Format date
         function formatDate(ts) {
             const d = new Date(ts);
             return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -549,14 +576,32 @@
                     return (a.order || 0) - (b.order || 0);
                 });
 
+            // تحديث المصفوفة العامة للنسخ
+            window.allPostsArray = postsArray;
+
             const count = postsArray.length;
             document.getElementById('postCountBadge').textContent = `${count} منشور`;
 
             postsArray.forEach((post, i) => {
-                const safeText = encodeURIComponent(post.content);
-                const htmlContent = post.content.replace(urlRegex, url =>
-                    `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
-                );
+                const limit = 350; // حد القص تبع "قراءة المزيد"
+                let contentHTML = '';
+
+                // حماية النص من الأكواد ثم تفعيل الروابط
+                const cleanContent = escapeHTML(post.content);
+
+                if (cleanContent.length > limit) {
+                    const shortText = linkify(cleanContent.substring(0, limit));
+                    const fullText = linkify(cleanContent);
+                    contentHTML = `
+                        <div class="post-content">
+                            <span class="short-text">${shortText}...</span>
+                            <span class="full-text">${fullText}</span>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleText(this)">قراءة المزيد...</button>
+                    `;
+                } else {
+                    contentHTML = `<div class="post-content">${linkify(cleanContent)}</div>`;
+                }
 
                 const card = document.createElement('div');
                 card.className = `post-card ${post.isPinned ? 'pinned' : ''}`;
@@ -570,13 +615,13 @@
                                 ${post.isPinned ? `<span class="pin-chip"><i class="fas fa-thumbtack" style="font-size:0.65rem;"></i> مثبت</span>` : ''}
                                 <span class="post-date-tag">${formatDate(post.timestamp)}</span>
                             </div>
-                            <button class="copy-btn" onclick="copyText(this, '${safeText}')">
+                            <button class="copy-btn" onclick="copyPostText('${post.id}', this)">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 نسخ
                             </button>
                         </div>
-                        ${post.title ? `<div class="post-title">${post.title}</div>` : ''}
-                        <div class="post-content">${htmlContent}</div>
+                        ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
+                        ${contentHTML}
                     </div>
                     <div class="card-footer">
                         <span class="read-time"><i class="far fa-clock" style="margin-left:4px; font-size:0.7rem;"></i>${readTime(post.content)}</span>
