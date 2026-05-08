@@ -4,86 +4,471 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منشوراتي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; }
+        :root {
+            --bg: #f7f6f2;
+            --surface: #ffffff;
+            --surface-alt: #f0ede8;
+            --ink: #1a1714;
+            --ink-muted: #7a756e;
+            --ink-faint: #c4bfb8;
+            --accent: #e8501a;
+            --accent-light: #fef0eb;
+            --accent-muted: #f5c4b2;
+            --pinned: #1a6beb;
+            --pinned-light: #eaf1fd;
+            --border: rgba(0,0,0,0.07);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+            --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 24px 64px rgba(0,0,0,0.1);
+            --radius: 18px;
+            --radius-sm: 10px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f8fafc;
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { margin: 0; font-weight: 900; color: #1e293b; font-size: 2.2rem; }
-        .header p { color: #64748b; margin-top: 5px; }
-        
-        #posts-container { width: 100%; max-width: 750px; display: flex; flex-direction: column; gap: 25px; }
-        
+
+        /* Grain texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
+        }
+
+        /* ==================== HEADER ==================== */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 0 clamp(16px, 5vw, 80px);
+            background: rgba(247, 246, 242, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 820px;
+            margin: 0 auto;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .wordmark {
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wordmark-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+
+        .post-count-badge {
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+            background: var(--surface-alt);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        /* ==================== HERO ==================== */
+        .hero {
+            padding: clamp(40px, 8vw, 80px) clamp(16px, 5vw, 80px) clamp(20px, 4vw, 40px);
+            max-width: 820px;
+            margin: 0 auto;
+            animation: fade-up 0.6s ease both;
+        }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--ink);
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--accent);
+            position: relative;
+        }
+
+        .hero-sub {
+            margin-top: 16px;
+            font-size: 1rem;
+            color: var(--ink-muted);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        /* ==================== FEED ==================== */
+        #posts-container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 0 clamp(16px, 5vw, 80px) 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ==================== POST CARD ==================== */
         .post-card {
-            background: #ffffff; border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-            border: 1px solid rgba(0,0,0,0.05);
-            padding: 25px; position: relative; transition: transform 0.2s;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            animation: card-in 0.5s ease both;
+            cursor: default;
         }
+
+        @keyframes card-in {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Pinned Card */
         .post-card.pinned {
-            border: 2px solid #3b82f6;
-            background: linear-gradient(to bottom, #eff6ff, #ffffff 20%);
+            border-color: transparent;
+            background: var(--surface);
+            box-shadow: 0 0 0 2px var(--pinned), var(--shadow-md);
         }
-        
-        .post-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;
+
+        .post-card.pinned .card-top-stripe {
+            background: var(--pinned);
         }
-        .post-info { display: flex; flex-direction: column; gap: 5px; }
-        .post-title { margin: 0; font-size: 1.3rem; font-weight: 900; color: #0f172a; }
-        .post-date { font-size: 0.85rem; color: #94a3b8; }
-        
-        .actions { display: flex; gap: 10px; align-items: center; }
-        .pin-badge {
-            background: #3b82f6; color: white; padding: 5px 12px;
-            border-radius: 50px; font-size: 0.8rem; font-weight: bold;
+
+        .card-top-stripe {
+            height: 3px;
+            background: transparent;
+            transition: background 0.3s;
         }
+
+        .post-card:hover .card-top-stripe {
+            background: var(--accent-muted);
+        }
+
+        .post-card.pinned:hover .card-top-stripe {
+            background: var(--pinned);
+        }
+
+        .card-body { padding: 24px 28px 20px; }
+
+        /* Post Meta Row */
+        .card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 12px;
+        }
+
+        .meta-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pin-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--pinned-light);
+            color: var(--pinned);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 4px 10px;
+            border-radius: 50px;
+        }
+
+        .post-date-tag {
+            font-size: 0.75rem;
+            color: var(--ink-faint);
+            font-weight: 600;
+        }
+
+        /* Copy Button */
         .copy-btn {
-            background: #f1f5f9; color: #475569; border: none; padding: 8px 15px;
-            border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold;
-            transition: 0.2s; display: flex; align-items: center; gap: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--surface-alt);
+            color: var(--ink-muted);
+            border: none;
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
-        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .copy-btn:active { transform: scale(0.95); }
-        
+
+        .copy-btn:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .copy-btn.copied {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .copy-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+        /* Post Title */
+        .post-title {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: var(--ink);
+            line-height: 1.35;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        /* Post Body */
         .post-content {
-            font-size: 1.1rem; line-height: 1.8; color: #334155;
-            white-space: pre-wrap; word-break: break-word;
+            font-size: 0.97rem;
+            line-height: 1.85;
+            color: #4a4540;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
-        .post-content a { color: #3b82f6; text-decoration: none; font-weight: bold; }
-        .post-content a:hover { text-decoration: underline; }
-        
-        .loading { text-align: center; color: #64748b; font-weight: bold; padding: 40px; }
-        
-        /* نظام الإشعارات */
+
+        .post-content a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid var(--accent-muted);
+            transition: border-color 0.2s;
+        }
+
+        .post-content a:hover {
+            border-bottom-color: var(--accent);
+        }
+
+        /* Divider line after content */
+        .card-footer {
+            border-top: 1px solid var(--border);
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .read-time {
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            font-weight: 600;
+        }
+
+        .word-count {
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            font-weight: 600;
+        }
+
+        /* ==================== EMPTY STATE ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--ink-muted);
+            animation: fade-up 0.5s ease;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* ==================== LOADING ==================== */
+        .loading-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .skeleton-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 28px;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+
+        .skeleton-line {
+            background: var(--surface-alt);
+            border-radius: 6px;
+            height: 14px;
+            margin-bottom: 12px;
+        }
+
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ==================== TOAST ==================== */
         #toast {
-            visibility: hidden; min-width: 250px; background-color: #1e293b;
-            color: #fff; text-align: center; border-radius: 12px; padding: 15px;
-            position: fixed; z-index: 1000; left: 50%; bottom: 30px;
-            transform: translateX(-50%); font-size: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-right: 4px solid #10b981; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--ink);
+            color: white;
+            padding: 12px 22px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
-        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #toast .toast-dot {
+            width: 7px;
+            height: 7px;
+            background: #4ade80;
+            border-radius: 50%;
+        }
+
+        /* ==================== FOOTER ==================== */
+        footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 0.75rem;
+            color: var(--ink-faint);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.9rem; }
+            .card-body { padding: 18px 18px 14px; }
+            .card-footer { padding: 10px 18px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>المنشورات</h1>
-        <p>أحدث الأخبار والمقالات</p>
+    <header>
+        <div class="header-inner">
+            <div class="wordmark">
+                <div class="wordmark-dot"></div>
+                منشوراتي
+            </div>
+            <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="hero-label">
+            <i class="fas fa-bolt" style="font-size:0.7rem;"></i>
+            آخر المنشورات
+        </div>
+        <h1>الأخبار<br><em>والمقالات</em></h1>
+        <p class="hero-sub">كل ما يستحق القراءة، في مكان واحد.</p>
     </div>
 
     <div id="posts-container">
-        <div class="loading"><i class="fas fa-circle-notch fa-spin"></i> جاري التحميل...</div>
+        <div class="loading-feed">
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="width:30%; height:10px; margin-bottom:20px;"></div>
+                <div class="skeleton-line" style="width:70%; height:18px;"></div>
+                <div class="skeleton-line" style="width:55%; height:18px;"></div>
+                <div class="skeleton-line" style="width:90%; height:12px; margin-top:8px;"></div>
+                <div class="skeleton-line" style="width:75%; height:12px;"></div>
+            </div>
+            <div class="skeleton-card" style="animation-delay:0.2s">
+                <div class="skeleton-line" style="width:40%; height:10px; margin-bottom:20px;"></div>
+                <div class="skeleton-line" style="width:80%; height:18px;"></div>
+                <div class="skeleton-line" style="width:95%; height:12px; margin-top:8px;"></div>
+                <div class="skeleton-line" style="width:60%; height:12px;"></div>
+            </div>
+            <div class="skeleton-card" style="animation-delay:0.4s">
+                <div class="skeleton-line" style="width:25%; height:10px; margin-bottom:20px;"></div>
+                <div class="skeleton-line" style="width:65%; height:18px;"></div>
+                <div class="skeleton-line" style="width:88%; height:12px; margin-top:8px;"></div>
+                <div class="skeleton-line" style="width:70%; height:12px;"></div>
+                <div class="skeleton-line" style="width:45%; height:12px;"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="toast"></div>
+    <footer>
+        صُنع بعناية ← منشوراتي
+    </footer>
+
+    <div id="toast"><span class="toast-dot"></span> <span id="toast-msg"></span></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -104,62 +489,99 @@
         const container = document.getElementById('posts-container');
         const urlRegex = /(https?:\/\/[^\s<]+)/g;
 
-        window.showToast = (message) => {
-            const toast = document.getElementById("toast");
-            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-            toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        // Toast
+        window.showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
         };
 
-        window.copyText = (btn, text) => {
-            navigator.clipboard.writeText(decodeURIComponent(text)).then(() => {
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = `<i class="fas fa-check" style="color:#10b981;"></i> تم النسخ`;
-                showToast("تم نسخ النص بنجاح");
-                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+        // Copy
+        window.copyText = (btn, encoded) => {
+            navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> تم النسخ`;
+                btn.classList.add('copied');
+                showToast('تم نسخ النص بنجاح');
+                setTimeout(() => {
+                    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> نسخ`;
+                    btn.classList.remove('copied');
+                }, 2000);
             });
         };
+
+        // Estimate read time
+        function readTime(text) {
+            const words = text.trim().split(/\s+/).length;
+            const mins = Math.max(1, Math.round(words / 200));
+            return `${mins} دقيقة قراءة`;
+        }
+
+        function wordCount(text) {
+            return text.trim().split(/\s+/).length + ' كلمة';
+        }
+
+        // Format date
+        function formatDate(ts) {
+            const d = new Date(ts);
+            return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
 
         onValue(ref(db, 'posts'), (snapshot) => {
             container.innerHTML = '';
             const data = snapshot.val();
-            
+
             if (!data) {
-                container.innerHTML = '<div class="loading">لا توجد منشورات حالياً.</div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p style="font-weight:700; font-size:1.1rem; margin-bottom:8px;">لا توجد منشورات بعد</p>
+                        <p style="font-size:0.9rem;">ترقب! المحتوى قادم قريباً.</p>
+                    </div>`;
+                document.getElementById('postCountBadge').textContent = '٠ منشورات';
                 return;
             }
 
-            const postsArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }))
+            const postsArray = Object.entries(data)
+                .map(([k, v]) => ({ id: k, ...v }))
                 .sort((a, b) => {
                     if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1;
                     return (a.order || 0) - (b.order || 0);
                 });
 
-            postsArray.forEach(post => {
-                const dateStr = new Date(post.timestamp).toLocaleString('ar-EG', { dateStyle: 'long', timeStyle: 'short' });
-                const formattedContent = post.content.replace(urlRegex, function(url) {
-                    return `<a href="${url}" target="_blank">${url}</a>`;
-                });
-                
-                // تشفير النص لضمان تمريره لزر النسخ بدون مشاكل
-                const safeRawText = encodeURIComponent(post.content);
+            const count = postsArray.length;
+            document.getElementById('postCountBadge').textContent = `${count} منشور`;
+
+            postsArray.forEach((post, i) => {
+                const safeText = encodeURIComponent(post.content);
+                const htmlContent = post.content.replace(urlRegex, url =>
+                    `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
+                );
 
                 const card = document.createElement('div');
                 card.className = `post-card ${post.isPinned ? 'pinned' : ''}`;
+                card.style.animationDelay = `${i * 0.07}s`;
+
                 card.innerHTML = `
-                    <div class="post-header">
-                        <div class="post-info">
-                            ${post.title ? `<h2 class="post-title">${post.title}</h2>` : ''}
-                            <div class="post-date">${dateStr}</div>
-                        </div>
-                        <div class="actions">
-                            ${post.isPinned ? `<span class="pin-badge"><i class="fas fa-thumbtack"></i> مثبت</span>` : ''}
-                            <button class="copy-btn" onclick="copyText(this, '${safeRawText}')">
-                                <i class="far fa-copy"></i> نسخ
+                    <div class="card-top-stripe"></div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <div class="meta-left">
+                                ${post.isPinned ? `<span class="pin-chip"><i class="fas fa-thumbtack" style="font-size:0.65rem;"></i> مثبت</span>` : ''}
+                                <span class="post-date-tag">${formatDate(post.timestamp)}</span>
+                            </div>
+                            <button class="copy-btn" onclick="copyText(this, '${safeText}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                نسخ
                             </button>
                         </div>
+                        ${post.title ? `<div class="post-title">${post.title}</div>` : ''}
+                        <div class="post-content">${htmlContent}</div>
                     </div>
-                    <div class="post-content">${formattedContent}</div>
+                    <div class="card-footer">
+                        <span class="read-time"><i class="far fa-clock" style="margin-left:4px; font-size:0.7rem;"></i>${readTime(post.content)}</span>
+                        <span class="word-count">${wordCount(post.content)}</span>
+                    </div>
                 `;
                 container.appendChild(card);
             });
