@@ -1,9 +1,10 @@
-const CACHE_NAME = 'admin-panel-v2';
+const CACHE_NAME = 'admin-panel-v3';
 
-// حطينا بس ملف الأدمن والصورة لأن الـ CSS والـ JS موجودين بداخل ملف الـ HTML نفسه
+// حطينا بس ملف الأدمن والصور لأن الـ CSS والـ JS موجودين بداخل ملف الـ HTML نفسه
 const urlsToCache = [
   './admin.html',
-  './icon.png'
+  './icon.png',
+  './icon-192.png'
 ];
 
 self.addEventListener('install', event => {
