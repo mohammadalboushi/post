@@ -445,6 +445,13 @@
             .card-body { padding: 18px 18px 14px; }
             .card-footer { padding: 10px 18px; }
         }
+
+        /* تنسيقات نافذة التنزيل */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+        .modal-box { background:var(--surface); padding:25px; border-radius:15px; width:90%; max-width:320px; text-align:center; box-shadow:var(--shadow-lg); }
+        .fmt-btn { background: var(--surface-alt); border: 2px solid transparent; padding: 12px; border-radius: 12px; color: var(--ink-muted); font-family: inherit; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem;}
+        .fmt-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+        .custom-input { width:100%; padding:12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--ink); font-family:inherit; outline:none; text-align: center; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -495,6 +502,29 @@
         صُنع بعناية ← منشوراتي
     </footer>
 
+    <div id="downloadModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="margin-bottom:15px; font-weight:900;">تنزيل كملف</h3>
+            
+            <input type="text" id="fileNameInput" class="custom-input" placeholder="اسم الملف...">
+
+            <div id="formatGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <button class="fmt-btn active" data-fmt="txt">نص (.txt)</button>
+                <button class="fmt-btn" data-fmt="doc">وورد (.doc)</button>
+                <button class="fmt-btn" data-fmt="md">ماركداون (.md)</button>
+                <button class="fmt-btn" data-fmt="html">ويب (.html)</button>
+                <button class="fmt-btn" data-fmt="custom" style="grid-column: span 2;">صيغة أخرى...</button>
+            </div>
+            
+            <input type="text" id="customFormatInput" class="custom-input" placeholder="اكتب الصيغة هنا (مثال: pdf, json)" style="display:none;">
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="confirmDownload()" style="flex:1; background:var(--accent); color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">⬇️ تنزيل</button>
+                <button onclick="closeDownloadModal()" style="flex:1; background:var(--surface-alt); border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; color:var(--ink-muted);">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast"><span class="toast-dot"></span> <span id="toast-msg"></span></div>
 
     <script type="module">
@@ -517,6 +547,81 @@
         
         window.allPostsArray = [];
         let allFetchedPosts = [];
+        let postToDownload = null;
+        let selectedFormat = 'txt';
+
+        // تفعيل الأزرار وتغيير اللون عند الضغط بداخل نافذة التنزيل
+        document.addEventListener('click', function(e) {
+            if(e.target.classList.contains('fmt-btn')) {
+                document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedFormat = e.target.getAttribute('data-fmt');
+                document.getElementById('customFormatInput').style.display = selectedFormat === 'custom' ? 'block' : 'none';
+                if(selectedFormat === 'custom') document.getElementById('customFormatInput').focus();
+            }
+        });
+
+        window.openDownloadModal = (id) => {
+            postToDownload = window.allPostsArray.find(p => p.id === id);
+            if(!postToDownload) return;
+            
+            document.getElementById('fileNameInput').value = postToDownload.title || 'Untitled_Post';
+            
+            document.getElementById('downloadModal').style.display = 'flex';
+            selectedFormat = 'txt';
+            document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.fmt-btn[data-fmt="txt"]').classList.add('active');
+            document.getElementById('customFormatInput').style.display = 'none';
+            document.getElementById('customFormatInput').value = '';
+        };
+
+        window.closeDownloadModal = () => {
+            document.getElementById('downloadModal').style.display = 'none';
+            postToDownload = null;
+        };
+
+        window.confirmDownload = () => {
+    if(!postToDownload) return;
+    let fmt = selectedFormat;
+    if(fmt === 'custom') fmt = document.getElementById('customFormatInput').value.trim() || 'txt';
+    fmt = fmt.replace('.', ''); // تنظيف الصيغة
+
+    let fileName = document.getElementById('fileNameInput').value.trim() || 'Post';
+    let ctx = postToDownload.content;
+    let mimeType = 'text/plain;charset=utf-8'; // الافتراضي
+    
+    if(fmt === 'html') {
+        // نمرر النص لدالة escapeHTML لحماية الأكواد البرمجية من التنفيذ
+        // ونستخدم وسم <pre> للحفاظ على المسافات والأسطر بدون الحاجة لـ <br>
+        let safeCtx = escapeHTML(ctx);
+        ctx = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>${fileName}</title>
+</head>
+<body style="padding:40px; line-height:1.6; font-family: 'Cairo', sans-serif;">
+    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: 1rem;">${safeCtx}</pre>
+</body>
+</html>`;
+        mimeType = 'text/html;charset=utf-8';
+    } else if (fmt === 'doc') {
+        // للوورد، الأفضل تغليفه بهيكل بسيط لضمان اتجاه النص من اليمين لليسار
+        let safeCtx = escapeHTML(ctx).replace(/\n/g, '<br>');
+        ctx = `<html dir="rtl"><head><meta charset="utf-8"></head><body style="font-family: Arial, sans-serif;">${safeCtx}</body></html>`;
+        mimeType = 'application/msword;charset=utf-8';
+    }
+    
+    const blob = new Blob([ctx], { type: mimeType });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${fileName}.${fmt}`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    closeDownloadModal();
+    showToast('بدأ التنزيل...');
+};
+
 
         function escapeHTML(str) {
             if (!str) return '';
@@ -533,7 +638,8 @@
 
         function processText(text, query) {
             let result = text;
-            const urlRegex = /(https?:\/\/[^\s<]+)/g;
+            // هاد السطر بيمنع الفلتر من تخريب الأكواد البرمجية والـ &quot;
+            const urlRegex = /(https?:\/\/[^\s<"&]+)/g;
             result = result.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
             
             if (query) {
@@ -692,10 +798,16 @@
                                 ${post.isPinned ? `<span class="pin-chip"><i class="fas fa-thumbtack" style="font-size:0.65rem;"></i> مثبت</span>` : ''}
                                 <span class="post-date-tag">${formatDate(post.timestamp)}</span>
                             </div>
-                            <button class="copy-btn" onclick="copyPostText('${post.id}', this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                نسخ
-                            </button>
+                            <div style="display:flex; gap:8px;">
+                                <button class="copy-btn" onclick="openDownloadModal('${post.id}')">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    تنزيل
+                                </button>
+                                <button class="copy-btn" onclick="copyPostText('${post.id}', this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    نسخ
+                                </button>
+                            </div>
                         </div>
                         ${cleanTitle ? `<div class="post-title">${cleanTitle}</div>` : ''}
                         ${contentHTML}
