@@ -1,4 +1,4 @@
-const CACHE_NAME = 'admin-panel-v1';
+const CACHE_NAME = 'admin-panel-v2';
 
 // حطينا بس ملف الأدمن والصورة لأن الـ CSS والـ JS موجودين بداخل ملف الـ HTML نفسه
 const urlsToCache = [
