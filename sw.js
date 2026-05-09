@@ -1,8 +1,9 @@
-const CACHE_NAME = 'admin-cache-v20';
+const CACHE_NAME = 'admin-cache-v26';
 
 const urlsToCache = [
   './admin.html',
-  './icon.png',
+  './icon-192.png',
+  './icon-512.png',
   './manifest.json'
 ];
 
