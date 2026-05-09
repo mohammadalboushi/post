@@ -25,6 +25,26 @@
             --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 24px 64px rgba(0,0,0,0.1);
             --radius: 18px;
             --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- Dark Mode Variables --- */
+        [data-theme="dark"] {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-alt: #2a2a2a;
+            --ink: #f0ede8;
+            --ink-muted: #a09c96;
+            --ink-faint: #6b6863;
+            --accent: #ff6b35;
+            --accent-light: rgba(255, 107, 53, 0.1);
+            --accent-muted: #8a3c22;
+            --pinned: #4dabf5;
+            --pinned-light: rgba(77, 171, 245, 0.1);
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,6 +55,7 @@
             color: var(--ink);
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background-color var(--transition), color var(--transition);
         }
 
         body::before {
@@ -52,11 +73,15 @@
             top: 0;
             z-index: 100;
             padding: 0 clamp(16px, 5vw, 80px);
-            background: rgba(247, 246, 242, 0.85);
+            background: var(--bg); 
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border);
+            transition: background var(--transition), border-color var(--transition);
         }
+        
+        [data-theme="dark"] header { background: rgba(18, 18, 18, 0.85); }
+        :not([data-theme="dark"]) header { background: rgba(247, 246, 242, 0.85); }
 
         .header-inner {
             max-width: 820px;
@@ -76,11 +101,11 @@
             align-items: center;
             gap: 8px;
             font-family: system-ui, sans-serif;
+            text-decoration: none;
+            cursor: pointer;
         }
 
-        .brand-m {
-            color: var(--accent);
-        }
+        .brand-m { color: var(--accent); }
 
         .wordmark-dot {
             width: 8px;
@@ -95,6 +120,32 @@
             50% { transform: scale(1.4); opacity: 0.7; }
         }
 
+        .header-controls { display: flex; align-items: center; gap: 12px; }
+
+        .icon-btn {
+            background: var(--surface-alt);
+            color: var(--ink-muted);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .icon-btn:hover {
+            background: var(--surface);
+            color: var(--accent);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn.active-fav { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
         .post-count-badge {
             font-size: 0.75rem;
             color: var(--ink-muted);
@@ -102,6 +153,7 @@
             padding: 4px 12px;
             border-radius: 50px;
             font-weight: 600;
+            transition: var(--transition);
         }
 
         .hero {
@@ -111,367 +163,206 @@
             animation: fade-up 0.6s ease both;
         }
 
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .hero-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 16px;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+            color: var(--accent); text-transform: uppercase; margin-bottom: 16px;
         }
 
-        .hero h1 {
-            font-size: clamp(2.2rem, 5vw, 3.5rem);
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            color: var(--ink);
-        }
+        .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--ink); transition: color var(--transition); }
+        .hero h1 em { font-style: normal; color: var(--accent); position: relative; }
+        .hero-sub { margin-top: 16px; font-size: 1rem; color: var(--ink-muted); font-weight: 400; line-height: 1.6; }
 
-        .hero h1 em {
-            font-style: normal;
-            color: var(--accent);
-            position: relative;
-        }
-
-        .hero-sub {
-            margin-top: 16px;
-            font-size: 1rem;
-            color: var(--ink-muted);
-            font-weight: 400;
-            line-height: 1.6;
-        }
-
-        /* تنسيقات مربع البحث */
-        .search-container {
-            margin: 25px auto 0;
-            max-width: 600px;
-            position: relative;
-        }
+        .search-container { margin: 25px auto 0; max-width: 600px; position: relative; }
         .search-input {
-            width: 100%;
-            padding: 14px 45px 14px 20px;
-            border-radius: 50px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--ink);
-            font-family: inherit;
-            font-size: 1rem;
-            box-shadow: var(--shadow-sm);
-            outline: none;
-            transition: 0.2s;
+            width: 100%; padding: 14px 45px 14px 20px; border-radius: 50px;
+            border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+            font-family: inherit; font-size: 1rem; box-shadow: var(--shadow-sm);
+            outline: none; transition: var(--transition);
         }
-        .search-input:focus { border-color: var(--accent); }
-        .search-icon {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--ink-muted);
-        }
-        mark {
-            background-color: #ffeb3b;
-            color: #000;
-            padding: 0 3px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
+        .search-input:focus { border-color: var(--accent); box-shadow: var(--shadow-md); }
+        .search-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--ink-muted); }
+        mark { background-color: rgba(232, 80, 26, 0.2); color: var(--accent); padding: 0 4px; border-radius: 4px; font-weight: bold; }
 
         #posts-container {
-            max-width: 820px;
-            margin: 0 auto;
-            padding: 0 clamp(16px, 5vw, 80px) 80px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            max-width: 820px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 80px) 80px;
+            display: flex; flex-direction: column; gap: 16px;
         }
+
+        .single-post-nav { margin-bottom: 24px; display: none; animation: fade-up 0.4s ease both; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px; background: transparent;
+            color: var(--ink-muted); border: none; font-family: inherit; font-size: 0.95rem;
+            font-weight: 700; cursor: pointer; padding: 8px 16px 8px 0; transition: var(--transition);
+        }
+        .back-btn:hover { color: var(--accent); transform: translateX(4px); }
 
         .post-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm); overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background-color var(--transition), border-color var(--transition);
             animation: card-in 0.5s ease both;
-            cursor: default;
         }
 
-        @keyframes card-in {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .post-card.clickable-card { cursor: pointer; }
+        .post-card.clickable-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .post-card.single-view { cursor: default; box-shadow: var(--shadow-md); }
+        .post-card.single-view:hover { transform: none; }
 
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
+        @keyframes card-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-        .post-card.pinned {
-            border-color: transparent;
-            background: var(--surface);
-            box-shadow: 0 0 0 2px var(--pinned), var(--shadow-md);
-        }
-
-        .post-card.pinned .card-top-stripe {
-            background: var(--pinned);
-        }
-
-        .card-top-stripe {
-            height: 3px;
-            background: transparent;
-            transition: background 0.3s;
-        }
-
-        .post-card:hover .card-top-stripe {
-            background: var(--accent-muted);
-        }
-
-        .post-card.pinned:hover .card-top-stripe {
-            background: var(--pinned);
-        }
+        .post-card.pinned { border-color: transparent; box-shadow: 0 0 0 2px var(--pinned), var(--shadow-md); }
+        .post-card.pinned .card-top-stripe { background: var(--pinned); }
+        .card-top-stripe { height: 3px; background: transparent; transition: background 0.3s; }
+        .post-card.clickable-card:hover .card-top-stripe { background: var(--accent-muted); }
+        .post-card.pinned:hover .card-top-stripe { background: var(--pinned); }
 
         .card-body { padding: 24px 28px 20px; }
-
-        .card-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            gap: 12px;
-        }
-
-        .meta-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;}
+        .meta-left { display: flex; align-items: center; gap: 10px; }
 
         .pin-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: var(--pinned-light);
-            color: var(--pinned);
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            padding: 4px 10px;
-            border-radius: 50px;
+            display: inline-flex; align-items: center; gap: 5px; background: var(--pinned-light);
+            color: var(--pinned); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+            padding: 4px 10px; border-radius: 50px;
         }
 
-        .post-date-tag {
-            font-size: 0.75rem;
-            color: var(--ink-faint);
-            font-weight: 600;
+        .post-date-tag { font-size: 0.75rem; color: var(--ink-faint); font-weight: 600; }
+
+        .actions-group { display: flex; gap: 8px; align-items: center; }
+
+        .action-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--surface-alt); color: var(--ink-muted);
+            border: none; border-radius: var(--radius-sm); width: 32px; height: 32px;
+            cursor: pointer; transition: all 0.2s ease; position: relative; z-index: 2;
         }
+        .action-btn:hover { background: var(--accent-light); color: var(--accent); }
+        .action-btn.fav-btn.active { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .action-btn.fav-btn.active i { font-weight: 900; } 
 
         .copy-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: var(--surface-alt);
-            color: var(--ink-muted);
-            border: none;
-            padding: 7px 14px;
-            border-radius: var(--radius-sm);
-            font-family: inherit;
-            font-size: 0.78rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface-alt); color: var(--ink-muted);
+            border: none; padding: 7px 14px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s ease; position: relative; z-index: 2;
         }
+        .copy-btn:hover { background: var(--accent-light); color: var(--accent); }
+        .copy-btn.copied { background: #e8f5e9; color: #2e7d32; }
 
-        .copy-btn:hover {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
+        .post-title { font-size: 1.15rem; font-weight: 900; color: var(--ink); line-height: 1.35; letter-spacing: -0.02em; margin-bottom: 12px; transition: color var(--transition); }
+        .single-view .post-title { font-size: 1.8rem; margin-bottom: 18px; }
 
-        .copy-btn.copied {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+        .post-content { font-size: 0.97rem; line-height: 1.85; color: var(--ink); opacity: 0.9; white-space: pre-wrap; word-break: break-word; transition: color var(--transition); }
+        .single-view .post-content { font-size: 1.05rem; }
+        .single-view .post-content { font-size: 1.05rem; }
 
-        .copy-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.post-card.clickable-card .post-content { 
+    cursor: text; 
+}
+        .post-content a { color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--accent-muted); transition: border-color 0.2s; position: relative; z-index: 2; }
+        .post-content a:hover { border-bottom-color: var(--accent); }
 
-        .post-title {
-            font-size: 1.15rem;
-            font-weight: 900;
-            color: var(--ink);
-            line-height: 1.35;
-            letter-spacing: -0.02em;
-            margin-bottom: 12px;
-        }
-
-        .post-content {
-            font-size: 0.97rem;
-            line-height: 1.85;
-            color: #4a4540;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .post-content a {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 1px solid var(--accent-muted);
-            transition: border-color 0.2s;
-        }
-
-        .post-content a:hover {
-            border-bottom-color: var(--accent);
-        }
-
-        .read-more-btn {
-            background: transparent;
-            color: var(--accent);
-            border: none;
-            font-weight: 800;
-            font-family: inherit;
-            cursor: pointer;
-            padding: 0;
-            margin-top: 8px;
-            font-size: 0.9rem;
-            display: inline-block;
-        }
+        .read-more-btn { background: transparent; color: var(--accent); border: none; font-weight: 800; font-family: inherit; cursor: pointer; padding: 0; margin-top: 8px; font-size: 0.9rem; display: inline-block; position: relative; z-index: 2; }
         .read-more-btn:hover { text-decoration: underline; }
         .full-text { display: none; }
         .short-text { display: inline; }
 
-        .card-footer {
-            border-top: 1px solid var(--border);
-            padding: 12px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
+        .card-footer { border-top: 1px solid var(--border); padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: border-color var(--transition); }
+        .read-time, .word-count { font-size: 0.72rem; color: var(--ink-faint); font-weight: 600; }
 
-        .read-time, .word-count {
-            font-size: 0.72rem;
-            color: var(--ink-faint);
-            font-weight: 600;
-        }
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--ink-muted); animation: fade-up 0.5s ease; }
+        .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.3; }
 
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--ink-muted);
-            animation: fade-up 0.5s ease;
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-
-        .loading-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .skeleton-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            padding: 28px;
-            animation: skeleton-pulse 1.5s ease-in-out infinite;
-        }
-
-        .skeleton-line {
-            background: var(--surface-alt);
-            border-radius: 6px;
-            height: 14px;
-            margin-bottom: 12px;
-        }
-
-        @keyframes skeleton-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .loading-feed { display: flex; flex-direction: column; gap: 16px; }
+        .skeleton-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 28px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
+        .skeleton-line { background: var(--surface-alt); border-radius: 6px; height: 14px; margin-bottom: 12px; }
+        @keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         #toast {
-            position: fixed;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--ink);
-            color: white;
-            padding: 12px 22px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            z-index: 9998;
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--ink); color: var(--surface); padding: 12px 22px; border-radius: 50px;
+            font-size: 0.85rem; font-weight: 700; font-family: 'Cairo', sans-serif;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 9998; opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast .toast-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
 
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        footer { text-align: center; padding: 24px; font-size: 0.75rem; color: var(--ink-faint); border-top: 1px solid var(--border); transition: border-color var(--transition); }
 
-        #toast .toast-dot {
-            width: 7px;
-            height: 7px;
-            background: #4ade80;
-            border-radius: 50%;
+        /* --- نافذة التنزيل المُحسنة (UI فخم) --- */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        .modal-box { 
+            background: var(--surface); padding: 30px 25px; border-radius: 24px; 
+            width: 90%; max-width: 360px; text-align: center; 
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            transition: background var(--transition), border-color var(--transition); 
+            animation: fade-up 0.3s ease both;
         }
-
-        footer {
-            text-align: center;
-            padding: 24px;
-            font-size: 0.75rem;
-            color: var(--ink-faint);
-            border-top: 1px solid var(--border);
+        .modal-title { margin-bottom: 20px; font-weight: 900; font-size: 1.25rem; color: var(--ink); }
+        .fmt-btn { 
+            background: var(--surface-alt); border: 2px solid transparent; padding: 12px; 
+            border-radius: 12px; color: var(--ink-muted); font-family: inherit; 
+            font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem;
         }
+        .fmt-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+        .custom-input { 
+            width: 100%; padding: 14px; margin-bottom: 16px; border-radius: 12px; 
+            border: 1px solid var(--border); background: var(--bg); color: var(--ink); 
+            font-family: inherit; outline: none; text-align: center; font-weight: bold; 
+            transition: var(--transition);
+        }
+        .custom-input:focus { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+        
+        .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-primary { 
+            flex: 1; background: var(--accent); color: #fff; border: none; 
+            padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; 
+            font-family: inherit; transition: var(--transition); 
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { 
+            flex: 1; background: var(--surface-alt); border: none; padding: 12px; 
+            border-radius: 12px; font-weight: 800; cursor: pointer; color: var(--ink-muted); 
+            font-family: inherit; transition: var(--transition); 
+        }
+        .btn-secondary:hover { background: var(--border); color: var(--ink); }
 
         @media (max-width: 600px) {
             .hero h1 { font-size: 1.9rem; }
             .card-body { padding: 18px 18px 14px; }
             .card-footer { padding: 10px 18px; }
+            .single-view .post-title { font-size: 1.4rem; }
         }
-
-        /* تنسيقات نافذة التنزيل */
-        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
-        .modal-box { background:var(--surface); padding:25px; border-radius:15px; width:90%; max-width:320px; text-align:center; box-shadow:var(--shadow-lg); }
-        .fmt-btn { background: var(--surface-alt); border: 2px solid transparent; padding: 12px; border-radius: 12px; color: var(--ink-muted); font-family: inherit; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem;}
-        .fmt-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-        .custom-input { width:100%; padding:12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--ink); font-family:inherit; outline:none; text-align: center; font-weight: bold;}
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-inner">
-            <div class="wordmark">
+            <a onclick="window.goHome(event)" class="wordmark">
                 <div class="wordmark-dot"></div>
                 <span dir="ltr"><span class="brand-m">M-</span>Al-Boushi</span>
+            </a>
+            
+            <div class="header-controls">
+                <button id="themeToggleBtn" class="icon-btn" title="الوضع الليلي/النهاري" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="favFilterBtn" class="icon-btn" title="المفضلة فقط" onclick="toggleFavFilter()">
+                    <i class="far fa-heart"></i>
+                </button>
+                <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
             </div>
-            <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
         </div>
     </header>
 
-    <div class="hero">
+    <div class="hero" id="heroSection">
         <div class="hero-label">
             <i class="fas fa-bolt" style="font-size:0.7rem;"></i>
             آخر المنشورات
@@ -486,19 +377,19 @@
     </div>
 
     <div id="posts-container">
-        <div class="loading-feed">
+        <div class="single-post-nav" id="singlePostNav">
+            <button class="back-btn" onclick="window.goHome(event)">
+                <i class="fas fa-arrow-right"></i> عودة للمنشورات
+            </button>
+        </div>
+        
+        <div class="loading-feed" id="feedContainer">
             <div class="skeleton-card">
                 <div class="skeleton-line" style="width:30%; height:10px; margin-bottom:20px;"></div>
                 <div class="skeleton-line" style="width:70%; height:18px;"></div>
                 <div class="skeleton-line" style="width:55%; height:18px;"></div>
                 <div class="skeleton-line" style="width:90%; height:12px; margin-top:8px;"></div>
                 <div class="skeleton-line" style="width:75%; height:12px;"></div>
-            </div>
-            <div class="skeleton-card" style="animation-delay:0.2s">
-                <div class="skeleton-line" style="width:40%; height:10px; margin-bottom:20px;"></div>
-                <div class="skeleton-line" style="width:80%; height:18px;"></div>
-                <div class="skeleton-line" style="width:95%; height:12px; margin-top:8px;"></div>
-                <div class="skeleton-line" style="width:60%; height:12px;"></div>
             </div>
         </div>
     </div>
@@ -509,10 +400,10 @@
 
     <div id="downloadModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="margin-bottom:15px; font-weight:900;">تنزيل كملف</h3>
+            <div class="modal-title">تنزيل كملف</div>
             
             <input type="text" id="fileNameInput" class="custom-input" placeholder="اسم الملف...">
-
+            
             <div id="formatGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <button class="fmt-btn active" data-fmt="txt">نص (.txt)</button>
                 <button class="fmt-btn" data-fmt="doc">وورد (.doc)</button>
@@ -523,9 +414,9 @@
             
             <input type="text" id="customFormatInput" class="custom-input" placeholder="اكتب الصيغة هنا (مثال: pdf, json)" style="display:none;">
             
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button onclick="confirmDownload()" style="flex:1; background:var(--accent); color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">⬇️ تنزيل</button>
-                <button onclick="closeDownloadModal()" style="flex:1; background:var(--surface-alt); border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; color:var(--ink-muted);">إلغاء</button>
+            <div class="modal-actions">
+                <button onclick="confirmDownload()" class="btn-primary"><i class="fas fa-download"></i> تنزيل</button>
+                <button onclick="closeDownloadModal()" class="btn-secondary">إلغاء</button>
             </div>
         </div>
     </div>
@@ -548,14 +439,104 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const container = document.getElementById('posts-container');
+        const feedContainer = document.getElementById('feedContainer');
         
         window.allPostsArray = [];
         let allFetchedPosts = [];
         let postToDownload = null;
         let selectedFormat = 'txt';
 
-        // تفعيل الأزرار وتغيير اللون عند الضغط بداخل نافذة التنزيل
+        // --- State Management ---
+        let currentPostId = new URLSearchParams(window.location.search).get('post');
+        let favorites = JSON.parse(localStorage.getItem('favPosts') || '[]');
+        let showFavoritesOnly = false;
+
+        // --- Dark Mode Init ---
+        const initTheme = () => {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.body.setAttribute('data-theme', 'dark');
+                document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        };
+        initTheme();
+
+        window.toggleTheme = () => {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        };
+
+        // --- SPA Routing ---
+        window.goHome = (e) => {
+            if(e) e.preventDefault();
+            history.pushState({}, '', window.location.pathname);
+            currentPostId = null;
+            document.getElementById('searchInput').value = '';
+            renderPosts();
+        };
+
+        window.openPost = (id, e) => {
+    // نمنع فتح المنشور إذا ضغط على زر، أو رابط، أو على النص نفسه
+    if(e && (e.target.closest('button') || e.target.closest('a') || e.target.closest('.post-content'))) return;
+    
+    history.pushState({post: id}, '', '?post=' + id);
+    currentPostId = id;
+    renderPosts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+        window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            currentPostId = params.get('post');
+            renderPosts(document.getElementById('searchInput').value);
+        });
+
+        // --- Favorites (DOM Manipulation Optimized) ---
+        window.toggleFavFilter = () => {
+            showFavoritesOnly = !showFavoritesOnly;
+            const btn = document.getElementById('favFilterBtn');
+            if (showFavoritesOnly) {
+                btn.classList.add('active-fav');
+                btn.innerHTML = '<i class="fas fa-heart"></i>';
+            } else {
+                btn.classList.remove('active-fav');
+                btn.innerHTML = '<i class="far fa-heart"></i>';
+            }
+            renderPosts(document.getElementById('searchInput').value);
+        };
+
+        window.toggleFavPost = (id, event) => {
+            const btn = event.currentTarget;
+            const index = favorites.indexOf(id);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="far fa-heart"></i>';
+                showToast('تمت الإزالة من المفضلة');
+                
+                if (showFavoritesOnly) {
+                    btn.closest('.post-card').style.display = 'none';
+                }
+            } else {
+                favorites.push(id);
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-heart"></i>';
+                showToast('تمت الإضافة للمفضلة');
+            }
+            localStorage.setItem('favPosts', JSON.stringify(favorites));
+        };
+
+        // --- Download Modals Logic (Original Logic Retained) ---
         document.addEventListener('click', function(e) {
             if(e.target.classList.contains('fmt-btn')) {
                 document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
@@ -569,9 +550,7 @@
         window.openDownloadModal = (id) => {
             postToDownload = window.allPostsArray.find(p => p.id === id);
             if(!postToDownload) return;
-            
             document.getElementById('fileNameInput').value = postToDownload.title || 'Untitled_Post';
-            
             document.getElementById('downloadModal').style.display = 'flex';
             selectedFormat = 'txt';
             document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
@@ -585,22 +564,18 @@
             postToDownload = null;
         };
 
-                window.confirmDownload = () => {
+        window.confirmDownload = () => {
             if(!postToDownload) return;
             let fmt = selectedFormat;
             if(fmt === 'custom') fmt = document.getElementById('customFormatInput').value.trim() || 'txt';
-            fmt = fmt.replace('.', ''); // تنظيف الصيغة
+            fmt = fmt.replace('.', '');
 
-            // التعديل الأول: الاسم الافتراضي صار بالإنكليزي
             let fileName = document.getElementById('fileNameInput').value.trim() || 'Post';
             let ctx = postToDownload.content;
-            let mimeType = 'text/plain;charset=utf-8'; // الافتراضي
+            let mimeType = 'text/plain;charset=utf-8';
             
             if(fmt === 'html') {
-                // نفحص إذا كان المنشور أصلاً عبارة عن كود HTML كامل
                 let isHTML = ctx.trim().toLowerCase().startsWith('<!doctype') || ctx.trim().toLowerCase().startsWith('<html');
-                
-                // إذا لم يكن كود HTML (يعني مقال عادي)، نقوم بتغليفه
                 if (!isHTML) {
                     let safeCtx = escapeHTML(ctx).replace(/\n/g, '<br>');
                     ctx = `<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n    <meta charset="utf-8">\n    <title>${fileName}</title>\n</head>\n<body style="padding:40px; line-height:1.8; font-family: 'Cairo', sans-serif; font-size: 1.1rem; color: #1a1714; background: #f7f6f2;">\n    ${safeCtx}\n</body>\n</html>`;
@@ -622,27 +597,17 @@
             showToast('بدأ التنزيل...');
         };
 
-
+        // --- Utils & Copy ---
         function escapeHTML(str) {
             if (!str) return '';
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
 
         function processText(text, query) {
             let result = text;
-            // هاد السطر بيمنع الفلتر من تخريب الأكواد البرمجية والـ &quot;
             const urlRegex = /(https?:\/\/[^\s<"&]+)/g;
             result = result.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
-            
-            if (query) {
+            if (query && !currentPostId) {
                 const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const regex = new RegExp(`(?![^<]*>)(${escapedQuery})`, 'gi');
                 result = result.replace(regex, '<mark>$1</mark>');
@@ -662,61 +627,63 @@
             if(!post) return;
             
             navigator.clipboard.writeText(post.content).then(() => {
-                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> تم النسخ`;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-check"></i> تم النسخ`;
                 btn.classList.add('copied');
                 showToast('تم نسخ النص بنجاح');
                 setTimeout(() => {
-                    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> نسخ`;
+                    btn.innerHTML = originalHtml;
                     btn.classList.remove('copied');
                 }, 2000);
             });
         };
 
         window.toggleText = (btn) => {
-    const contentDiv = btn.previousElementSibling;
-    const shortText = contentDiv.querySelector('.short-text');
-    const fullText = contentDiv.querySelector('.full-text');
-    
-    // التعديل هون: ضفنا || fullText.style.display === ''
-    if (fullText.style.display === 'none' || fullText.style.display === '') {
-        shortText.style.display = 'none';
-        fullText.style.display = 'inline';
-        btn.innerText = 'عرض أقل';
-    } else {
-        shortText.style.display = 'inline';
-        fullText.style.display = 'none';
-        btn.innerText = 'قراءة المزيد...';
-    }
-};
+            const contentDiv = btn.previousElementSibling;
+            const shortText = contentDiv.querySelector('.short-text');
+            const fullText = contentDiv.querySelector('.full-text');
+            
+            if (fullText.style.display === 'none' || fullText.style.display === '') {
+                shortText.style.display = 'none';
+                fullText.style.display = 'inline';
+                btn.innerText = 'عرض أقل';
+            } else {
+                shortText.style.display = 'inline';
+                fullText.style.display = 'none';
+                btn.innerText = 'قراءة المزيد...';
+            }
+        };
 
-        function readTime(text) {
-            const words = text.trim().split(/\s+/).length;
-            const mins = Math.max(1, Math.round(words / 200));
-            return `${mins} دقيقة قراءة`;
+        function readTime(text) { return `${Math.max(1, Math.round(text.trim().split(/\s+/).length / 200))} دقيقة قراءة`; }
+        function wordCount(text) { return text.trim().split(/\s+/).length + ' كلمة'; }
+        function charCount(text) { return text.length + ' حرف'; }
+        function lineCount(text) { return text.split(/\r\n|\r|\n/).length + ' سطر'; }
+        function formatDate(ts) { return new Date(ts).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }); }
+
+        // --- Debounce Search (الأداء العالي) ---
+        function debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
         }
 
-        function wordCount(text) {
-            return text.trim().split(/\s+/).length + ' كلمة';
-        }
+        const handleSearch = debounce((e) => {
+            if(currentPostId && e.target.value.trim() !== '') {
+                history.pushState({}, '', window.location.pathname);
+                currentPostId = null;
+            }
+            renderPosts(e.target.value.trim());
+        }, 300);
 
-        function charCount(text) {
-            return text.length + ' حرف';
-        }
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
 
-        function lineCount(text) {
-            return text.split(/\r\n|\r|\n/).length + ' سطر';
-        }
-
-        function formatDate(ts) {
-            const d = new Date(ts);
-            return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-
+        // --- Firebase Init ---
         onValue(ref(db, 'posts'), (snapshot) => {
             const data = snapshot.val();
-
             if (!data) {
-                container.innerHTML = `
+                feedContainer.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📭</div>
                         <p style="font-weight:700; font-size:1.1rem; margin-bottom:8px;">لا توجد منشورات بعد</p>
@@ -734,29 +701,45 @@
                 });
 
             window.allPostsArray = allFetchedPosts;
-            renderPosts("");
+            renderPosts(document.getElementById('searchInput').value);
         });
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            renderPosts(e.target.value.trim());
-        });
+        // --- Render Logic ---
+        function renderPosts(query = '') {
+            feedContainer.innerHTML = '';
+            let filtered = [...allFetchedPosts];
 
-        function renderPosts(query) {
-            container.innerHTML = '';
-            
-            let filtered = allFetchedPosts;
-            if (query) {
-                const q = query.toLowerCase();
-                filtered = allFetchedPosts.filter(p => 
-                    (p.title && p.title.toLowerCase().includes(q)) || 
-                    (p.content && p.content.toLowerCase().includes(q))
-                );
+            if (currentPostId) {
+                document.getElementById('heroSection').style.display = 'none';
+                document.getElementById('singlePostNav').style.display = 'block';
+                filtered = filtered.filter(p => p.id === currentPostId);
+            } else {
+                document.getElementById('heroSection').style.display = 'block';
+                document.getElementById('singlePostNav').style.display = 'none';
+                
+                if (showFavoritesOnly) {
+                    filtered = filtered.filter(p => favorites.includes(p.id));
+                }
+
+                if (query) {
+                    const q = query.toLowerCase();
+                    filtered = filtered.map(p => {
+                        let score = 0;
+                        if (p.title && p.title.toLowerCase().includes(q)) score += 10;
+                        if (p.content && p.content.toLowerCase().includes(q)) score += 1;
+                        return { ...p, score };
+                    }).filter(p => p.score > 0).sort((a, b) => b.score - a.score);
+                }
             }
 
-            document.getElementById('postCountBadge').textContent = `${filtered.length} منشور`;
+            if(!currentPostId) {
+                document.getElementById('postCountBadge').textContent = `${filtered.length} منشور`;
+            } else {
+                document.getElementById('postCountBadge').textContent = 'عرض منشور';
+            }
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p style="font-weight:700;">ما لقينا شي بيشبه "${query}"</p></div>`;
+                feedContainer.innerHTML = `<div class="empty-state"><div class="empty-icon">${showFavoritesOnly ? '💔' : '🔍'}</div><p style="font-weight:700;">${showFavoritesOnly ? 'المفضلة فارغة' : `ما لقينا شي بيشبه "${query}"`}</p></div>`;
                 return;
             }
 
@@ -767,46 +750,53 @@
                 let cleanTitle = escapeHTML(post.title || '');
                 let cleanContent = escapeHTML(post.content || '');
 
-                if (query) {
+                if (query && !currentPostId) {
                     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp(`(?![^<]*>)(${escapedQuery})`, 'gi');
                     cleanTitle = cleanTitle.replace(regex, '<mark>$1</mark>');
                 }
 
-                if (cleanContent.length > limit && !query) {
-                    const shortText = processText(cleanContent.substring(0, limit), query);
-                    const fullText = processText(cleanContent, query);
-                    contentHTML = `
-                        <div class="post-content">
-                            <span class="short-text">${shortText}...</span>
-                            <span class="full-text">${fullText}</span>
-                        </div>
-                        <button class="read-more-btn" onclick="toggleText(this)">قراءة المزيد...</button>
-                    `;
-                } else {
+                if (currentPostId) {
                     contentHTML = `<div class="post-content">${processText(cleanContent, query)}</div>`;
+                } else {
+                    if (cleanContent.length > limit && !query) {
+                        const shortText = processText(cleanContent.substring(0, limit), query);
+                        const fullText = processText(cleanContent, query);
+                        contentHTML = `
+                            <div class="post-content">
+                                <span class="short-text">${shortText}...</span>
+                                <span class="full-text">${fullText}</span>
+                            </div>
+                            <button class="read-more-btn" onclick="toggleText(this)">قراءة المزيد...</button>
+                        `;
+                    } else {
+                        contentHTML = `<div class="post-content">${processText(cleanContent, query)}</div>`;
+                    }
                 }
 
+                const isFav = favorites.includes(post.id);
                 const card = document.createElement('div');
-                card.className = `post-card ${post.isPinned ? 'pinned' : ''}`;
+                card.className = `post-card ${post.isPinned ? 'pinned' : ''} ${currentPostId ? 'single-view' : 'clickable-card'}`;
                 card.style.animationDelay = `${i * 0.05}s`;
+                if(!currentPostId) card.onclick = (e) => window.openPost(post.id, e);
 
                 card.innerHTML = `
                     <div class="card-top-stripe"></div>
                     <div class="card-body">
                         <div class="card-meta">
                             <div class="meta-left">
-                                ${post.isPinned ? `<span class="pin-chip"><i class="fas fa-thumbtack" style="font-size:0.65rem;"></i> مثبت</span>` : ''}
+                                ${post.isPinned && !currentPostId ? `<span class="pin-chip"><i class="fas fa-thumbtack" style="font-size:0.65rem;"></i> مثبت</span>` : ''}
                                 <span class="post-date-tag">${formatDate(post.timestamp)}</span>
                             </div>
-                            <div style="display:flex; gap:8px;">
+                            <div class="actions-group">
+                                <button class="action-btn fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavPost('${post.id}', event)" title="أضف للمفضلة">
+                                    <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+                                </button>
                                 <button class="copy-btn" onclick="openDownloadModal('${post.id}')">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    تنزيل
+                                    <i class="fas fa-download"></i> تنزيل
                                 </button>
                                 <button class="copy-btn" onclick="copyPostText('${post.id}', this)">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                    نسخ
+                                    <i class="far fa-copy"></i> نسخ
                                 </button>
                             </div>
                         </div>
@@ -822,17 +812,8 @@
                         </div>
                     </div>
                 `;
-                container.appendChild(card);
+                feedContainer.appendChild(card);
             });
-
-            if (query) {
-                setTimeout(() => {
-                    const firstMark = document.querySelector('mark');
-                    if (firstMark) {
-                        firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100); 
-            }
         }
     </script>
 </body>
