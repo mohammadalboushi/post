@@ -68,13 +68,18 @@
         }
 
         .wordmark {
-            font-size: 1rem;
+            font-size: 1.25rem;
             font-weight: 900;
             letter-spacing: -0.02em;
             color: var(--ink);
             display: flex;
             align-items: center;
             gap: 8px;
+            font-family: system-ui, sans-serif;
+        }
+
+        .brand-m {
+            color: var(--accent);
         }
 
         .wordmark-dot {
@@ -460,7 +465,7 @@
         <div class="header-inner">
             <div class="wordmark">
                 <div class="wordmark-dot"></div>
-M-Al-Boushi
+                <span dir="ltr"><span class="brand-m">M-</span>Al-Boushi</span>
             </div>
             <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
         </div>
@@ -668,20 +673,21 @@ M-Al-Boushi
         };
 
         window.toggleText = (btn) => {
-            const contentDiv = btn.previousElementSibling;
-            const shortText = contentDiv.querySelector('.short-text');
-            const fullText = contentDiv.querySelector('.full-text');
-            
-            if (fullText.style.display === 'none') {
-                shortText.style.display = 'none';
-                fullText.style.display = 'inline';
-                btn.innerText = 'عرض أقل';
-            } else {
-                shortText.style.display = 'inline';
-                fullText.style.display = 'none';
-                btn.innerText = 'قراءة المزيد...';
-            }
-        };
+    const contentDiv = btn.previousElementSibling;
+    const shortText = contentDiv.querySelector('.short-text');
+    const fullText = contentDiv.querySelector('.full-text');
+    
+    // التعديل هون: ضفنا || fullText.style.display === ''
+    if (fullText.style.display === 'none' || fullText.style.display === '') {
+        shortText.style.display = 'none';
+        fullText.style.display = 'inline';
+        btn.innerText = 'عرض أقل';
+    } else {
+        shortText.style.display = 'inline';
+        fullText.style.display = 'none';
+        btn.innerText = 'قراءة المزيد...';
+    }
+};
 
         function readTime(text) {
             const words = text.trim().split(/\s+/).length;
