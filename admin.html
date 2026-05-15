@@ -1113,15 +1113,65 @@
             
         }
 
-        // برمجة أزرار التسجيل (بالمايك الأساسي)
+                // برمجة زر التسجيل (صدى Reverb احترافي بناءً على الإعدادات المطلوبة)
         document.getElementById('startRecordBtn').onclick = async () => {
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const audioDevs = devices.filter(d => d.kind === 'audioinput');
+                // محاولة إجبار المتصفح ياخد المايك الأساسي للجوال
                 const builtIn = audioDevs.find(d => d.label.toLowerCase().includes('built-in') || d.label.toLowerCase().includes('internal') || d.label.toLowerCase().includes('primary'));
                 
-                const stream = await navigator.mediaDevices.getUserMedia(builtIn ? { audio: { deviceId: { exact: builtIn.deviceId } } } : { audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                // طلب التسجيل بدون إضافات المتصفح اللي بتخنق الصوت
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: builtIn ? { deviceId: { exact: builtIn.deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                });
+
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaStreamSource(stream);
+                const destination = audioCtx.createMediaStreamDestination();
+
+                // 1. توليد تأثير الغرفة (Room Size: 100%)
+                const reverbTime = 3.0; // محاكاة غرفة كبيرة (3 ثواني)
+                const sampleRate = audioCtx.sampleRate;
+                const length = sampleRate * reverbTime;
+                const impulse = audioCtx.createBuffer(2, length, sampleRate);
+                for (let i = 0; i < length; i++) {
+                    const decay = Math.pow(1 - i / length, 4); // المضائلة العالية
+                    impulse.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay;
+                    impulse.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay;
+                }
+                const convolver = audioCtx.createConvolver();
+                convolver.buffer = impulse;
+
+                // 2. قبل التأخير (Pre-delay: 300ms)
+                const preDelay = audioCtx.createDelay();
+                preDelay.delayTime.value = 0.300; // 300 مللي ثانية بالضبط
+
+                // 3. قطع منخفض التردد (Low Cut Filter: 743 Hz)
+                const lowCut = audioCtx.createBiquadFilter();
+                lowCut.type = "highpass";
+                lowCut.frequency.value = 743;
+
+                // 4. دمج الصوت الأصلي مع الصدى
+                const dryGain = audioCtx.createGain(); // قوة الصوت الأساسي
+                dryGain.gain.value = 1.0;
+                
+                const wetGain = audioCtx.createGain(); // قوة الصدى
+                wetGain.gain.value = 0.55; 
+
+                // التوصيلات الصوتية للمسارين:
+                // أ- مسار الصوت النظيف
+                source.connect(dryGain);
+                dryGain.connect(destination);
+
+                // ب- مسار الصدى (تأخير 300ms -> فلتر 743Hz -> تأثير الغرفة -> دمج)
+                source.connect(preDelay);
+                preDelay.connect(lowCut);
+                lowCut.connect(convolver);
+                convolver.connect(wetGain);
+                wetGain.connect(destination);
+
+                mediaRecorder = new MediaRecorder(destination.stream);
                 mediaRecorder.start();
                 audioChunks = [];
 
@@ -1131,14 +1181,17 @@
                     document.getElementById('audioPreview').src = URL.createObjectURL(recordedAudioBlob);
                     document.getElementById('audioPreview').style.display = 'block';
                     stream.getTracks().forEach(track => track.stop());
+                    audioCtx.close();
                 };
 
                 document.getElementById('startRecordBtn').style.display = 'none';
                 document.getElementById('stopRecordBtn').style.display = 'inline-flex';
             } catch (err) {
+                console.error(err);
                 showToast("الرجاء السماح بالوصول للمايكروفون", "error");
             }
         };
+
 
         document.getElementById('stopRecordBtn').onclick = () => {
             if(mediaRecorder && mediaRecorder.state !== 'inactive') {
