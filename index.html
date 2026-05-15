@@ -802,7 +802,7 @@
                             </div>
                         </div>
                         ${cleanTitle ? `<div class="post-title">${cleanTitle}</div>` : ''}
-                        ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" class="post-image" alt="صورة مرفقة" loading="lazy">` : ''}
+                        ${post.audioUrl ? `<audio controls src="${escapeHTML(post.audioUrl)}" style="width: 100%; margin-bottom: 16px; border-radius: 8px; outline: none;"></audio>` : ''}
                         ${contentHTML}
                     </div>
                     <div class="card-footer">

@@ -761,7 +761,6 @@
 </head>
 <body>
 
-    <!-- LOGIN STATE -->
     <div id="login-section">
         <div class="login-card">
             <div class="login-icon">✦</div>
@@ -774,10 +773,8 @@
         </div>
     </div>
 
-    <!-- APP SHELL -->
     <div class="app-shell" id="app-shell" style="display:none;">
 
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <div class="logo-icon">✦</div>
@@ -817,9 +814,7 @@
             </div>
         </aside>
 
-        <!-- MAIN -->
         <main class="main">
-            <!-- TOPBAR -->
             <div class="topbar">
                 <div class="topbar-title">إدارة / <span>المنشورات</span></div>
                                 <div class="topbar-actions">
@@ -837,7 +832,6 @@
                 </div>
             </div>
 
-            <!-- STATS -->
             <div class="stats-strip" id="statsStrip">
                 <div class="stat-pill">
                     <div class="stat-val" id="statTotal">–</div>
@@ -849,10 +843,8 @@
                 </div>
             </div>
 
-            <!-- CONTENT GRID -->
             <div class="content-grid">
 
-                <!-- EDITOR PANE -->
                 <div class="editor-pane">
                     <div class="pane-header">
                         <div class="pane-title">محرر المنشور</div>
@@ -875,6 +867,19 @@
                     </div>
 
                     <div class="field">
+                        <label class="field-label">صوت المنشور (رفع أو تسجيل)</label>
+                        <input type="file" id="postAudioFile" accept="audio/*" style="padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); width: 100%;">
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="button" id="startRecordBtn" class="btn btn-primary" style="flex: 1;"><i class="fas fa-microphone"></i> تسجيل المايك</button>
+                            <button type="button" id="stopRecordBtn" class="btn btn-danger-soft" style="display:none; flex: 1;"><i class="fas fa-stop"></i> إيقاف التسجيل</button>
+                        </div>
+                        
+                        <audio id="audioPreview" controls style="display:none; width: 100%; margin-top: 12px; height: 40px;"></audio>
+                        <input type="hidden" id="postAudioUrl">
+                    </div>
+
+                    <div class="field">
                         <label class="field-label">المحتوى <span style="color:var(--danger)">*</span></label>
                         <textarea id="postContent" placeholder="اكتب محتوى منشورك هنا..."></textarea>
                         <div class="char-counter" id="charCounter">0 حرف</div>
@@ -891,7 +896,6 @@
                     </div>
                 </div>
 
-                <!-- LIST PANE -->
                 <div class="list-pane">
                     <div class="list-pane-header">
                         <div class="list-pane-title">المنشورات المنشورة</div>
@@ -909,7 +913,6 @@
         </main>
     </div>
 
-    <!-- DELETE MODAL -->
     <div class="modal-backdrop" id="deleteModal">
         <div class="modal">
             <div class="modal-icon"><i class="fas fa-trash"></i></div>
@@ -924,7 +927,6 @@
         </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast">
         <span class="toast-dot success" id="toastDot"></span>
         <span id="toastMsg"></span>
@@ -948,7 +950,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-                const provider = new GoogleAuthProvider();
+        const provider = new GoogleAuthProvider();
         const myUID = "EFrGJwUdnlZDQ4A7GGIEh2VgoyK2";
 
         let allPosts = {};
@@ -957,6 +959,10 @@
         let swapSourceKey = null;
         let sortableInstance = null;
         let allPostsArray = [];
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedAudioBlob = null;
 
         // Toast
         window.showToast = (msg, type = "success") => {
@@ -1107,11 +1113,48 @@
             
         }
 
+        // برمجة أزرار التسجيل (بالمايك الأساسي)
+        document.getElementById('startRecordBtn').onclick = async () => {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioDevs = devices.filter(d => d.kind === 'audioinput');
+                const builtIn = audioDevs.find(d => d.label.toLowerCase().includes('built-in') || d.label.toLowerCase().includes('internal') || d.label.toLowerCase().includes('primary'));
+                
+                const stream = await navigator.mediaDevices.getUserMedia(builtIn ? { audio: { deviceId: { exact: builtIn.deviceId } } } : { audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    document.getElementById('audioPreview').src = URL.createObjectURL(recordedAudioBlob);
+                    document.getElementById('audioPreview').style.display = 'block';
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                document.getElementById('startRecordBtn').style.display = 'none';
+                document.getElementById('stopRecordBtn').style.display = 'inline-flex';
+            } catch (err) {
+                showToast("الرجاء السماح بالوصول للمايكروفون", "error");
+            }
+        };
+
+        document.getElementById('stopRecordBtn').onclick = () => {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                document.getElementById('startRecordBtn').style.display = 'inline-flex';
+                document.getElementById('stopRecordBtn').style.display = 'none';
+            }
+        };
+
         document.getElementById('publishBtn').onclick = async () => {
             const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
             const fileInput = document.getElementById('postImageFile');
+            const audioInput = document.getElementById('postAudioFile');
             let imageUrl = document.getElementById('postImageUrl').value; 
+            let audioUrl = document.getElementById('postAudioUrl').value; 
 
             if (!content) return showToast("المحتوى مطلوب!", "error");
 
@@ -1120,34 +1163,37 @@
             btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري الرفع والنشر...`;
 
             try {
-                // إذا في صورة مختارة للرفع
+                // رفع الصورة على ImgBB
                 if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
                     const formData = new FormData();
-                    formData.append("image", file);
-                    
-                    // مفتاح الـ API تبعك
-                    const apiKey = "10566b9490b2193f1db5498c611ab801"; 
-                    
-                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                        method: "POST",
-                        body: formData
+                    formData.append("image", fileInput.files[0]);
+                    const resImage = await fetch(`https://api.imgbb.com/1/upload?key=10566b9490b2193f1db5498c611ab801`, {
+                        method: "POST", body: formData
                     });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        imageUrl = data.data.url; 
-                    } else {
-                        throw new Error("مشكلة برفع الصورة");
-                    }
+                    const dataImage = await resImage.json();
+                    if (dataImage.success) imageUrl = dataImage.data.url; 
+                }
+
+                // رفع الصوت على Cloudinary
+                let audioToUpload = audioInput.files.length > 0 ? audioInput.files[0] : recordedAudioBlob;
+                if (audioToUpload) {
+                    const audioData = new FormData();
+                    audioData.append("file", audioToUpload);
+                    audioData.append("upload_preset", "malaboushi_preset"); 
+
+                    const resAudio = await fetch(`https://api.cloudinary.com/v1_1/dwqdzwgms/video/upload`, {
+                        method: "POST", body: audioData
+                    });
+                    const dataAudio = await resAudio.json();
+                    if (dataAudio.secure_url) audioUrl = dataAudio.secure_url;
                 }
 
                 if (editingPostId) {
-                    await update(ref(db, `posts/${editingPostId}`), { title, content, imageUrl: imageUrl || null });
+                    await update(ref(db, `posts/${editingPostId}`), { title, content, imageUrl: imageUrl || null, audioUrl: audioUrl || null });
                     showToast("تم تحديث المنشور");
                 } else {
                     await push(ref(db, 'posts'), {
-                        title, content, imageUrl: imageUrl || null, timestamp: Date.now(), order: Date.now() * -1, isPinned: false
+                        title, content, imageUrl: imageUrl || null, audioUrl: audioUrl || null, timestamp: Date.now(), order: Date.now() * -1, isPinned: false
                     });
                     showToast("تم نشر المنشور ✓");
                 }
@@ -1167,6 +1213,8 @@
             document.getElementById('postTitle').value = post.title || '';
             document.getElementById('postImageUrl').value = post.imageUrl || '';
             document.getElementById('postImageFile').value = '';
+            document.getElementById('postAudioUrl').value = post.audioUrl || '';
+            document.getElementById('postAudioFile').value = '';
             document.getElementById('postContent').value = post.content;
             document.getElementById('postContent').dispatchEvent(new Event('input'));
             document.getElementById('publishBtn').innerHTML = `<i class="fas fa-floppy-disk"></i> حفظ التعديلات`;
@@ -1186,6 +1234,11 @@
             document.getElementById('postTitle').value = '';
             document.getElementById('postImageUrl').value = '';
             document.getElementById('postImageFile').value = '';
+            document.getElementById('postAudioUrl').value = '';
+            document.getElementById('postAudioFile').value = '';
+            document.getElementById('audioPreview').style.display = 'none';
+            document.getElementById('audioPreview').src = '';
+            recordedAudioBlob = null;
             document.getElementById('postContent').value = '';
             document.getElementById('charCounter').textContent = '0 حرف';
             document.getElementById('publishBtn').innerHTML = `<i class="fas fa-paper-plane"></i> نشر`;
