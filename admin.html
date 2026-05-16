@@ -1081,12 +1081,8 @@
         </div>
     </div>
 
-    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 35px;">
+    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 30px;">
         <div style="position: absolute; top: 5px; right: 10px; z-index: 10; color: #fff; font-size: 0.75rem; font-weight: bold;">المشغل المباشر</div>
-        <div style="position: absolute; top: 5px; left: 10px; z-index: 10; display: flex; gap: 5px;">
-            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="toggleSharedMediaPlay()"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
-            <button class="btn btn-danger-soft" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(239,68,68,0.8); color: white;" onclick="stopSharedMedia()"><i class="fas fa-times"></i> إيقاف للكل</button>
-        </div>
         <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
         <audio id="localAudioPlayer" style="display:none; width: 100%; outline: none; border-radius: 0; background: #f0ede8; height: 40px;" controls></audio>
     </div>
@@ -1113,6 +1109,14 @@
             <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
                 <label><span style="color: var(--accent);"><i class="fas fa-headphones"></i> أسمع حالي (Monitor)</span><span id="monitorVal">0%</span></label>
                 <input type="range" id="monitorSlider" min="0" max="100" value="0">
+            </div>
+            
+            <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <label style="color: var(--warning); margin-bottom: 10px; display:block; text-align:center;"><i class="fas fa-play-circle"></i> أزرار تشغيل وإيقاف الميديا</label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="toggleSharedMediaPlay()"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                    <button class="btn btn-danger-soft" style="flex:1; justify-content:center;" onclick="stopSharedMedia()"><i class="fas fa-times"></i> إيقاف للكل</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1362,12 +1366,12 @@
 
         // --- دوال الصدى والتسجيل ---
         function generateReverb(ctx) {
-            const length = ctx.sampleRate * 2.0; 
+            const length = ctx.sampleRate * 3.5; // طول صدى أكبر (3.5 ثواني)
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
             const left = impulse.getChannelData(0);
             const right = impulse.getChannelData(1);
             for (let i = 0; i < length; i++) {
-                const decay = Math.pow(1 - i / length, 4);
+                const decay = Math.pow(1 - i / length, 1.5); // انحدار أبطأ ليعطي قوة وعمق أكبر
                 left[i] = (Math.random() * 2 - 1) * decay;
                 right[i] = (Math.random() * 2 - 1) * decay;
             }
@@ -1758,14 +1762,17 @@
                     rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                     await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, "admin_uid");
                     
-                    // 1. تشغيل المكسر وسحب المايك خام للمدير
-                    liveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    // 1. تشغيل المكسر وسحب المايك بأقل تأخير ممكن (Interactive) مع دقة ستيريو
+                    liveAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
                     liveMicStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+                        audio: { 
+                            echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+                            channelCount: 2, sampleRate: 48000
+                        } 
                     });
                     liveSourceNode = liveAudioCtx.createMediaStreamSource(liveMicStream);
 
-                    // 2. إنشاء الفلاتر (بوابة الضجيج الاحترافية) للمدير
+                    // 2. بوابة الضجيج الحقيقية (نظام التقاط الذروة للمسافات)
                     let adminAnalyser = liveAudioCtx.createAnalyser();
                     adminAnalyser.fftSize = 256;
                     liveSourceNode.connect(adminAnalyser);
@@ -1775,28 +1782,32 @@
                     let checkAdminGate = () => {
                         if(!isLive) return;
                         requestAnimationFrame(checkAdminGate);
-                        
+
                         const data = new Uint8Array(adminAnalyser.frequencyBinCount);
                         adminAnalyser.getByteFrequencyData(data);
+
+                        let maxVol = 0; 
+                        for(let i=0; i<data.length; i++) {
+                            if(data[i] > maxVol) maxVol = data[i];
+                        }
                         
-                        let sum = 0; 
-                        for(let i=0; i<data.length; i++) sum += data[i];
-                        let averageVolume = sum / data.length;
-                        let threshold = parseInt(document.getElementById('noiseSlider').value) * 1.5; 
-                        
-                        if (averageVolume >= threshold) {
-                            liveNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.03); 
+                        // عتبة الفلتر: هلق السلايدر بيشتغل صح وبيخنق الأصوات البعيدة
+                        let threshold = (parseInt(document.getElementById('noiseSlider').value) / 100) * 200;
+
+                        if (maxVol >= threshold) {
+                            liveNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.01);
                         } else {
-                            liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.1); 
+                            liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.15);
                         }
                     };
                     checkAdminGate();
+
 
                     liveReverbNode = liveAudioCtx.createConvolver();
                     liveReverbNode.buffer = generateReverb(liveAudioCtx);
 
                     liveWetGain = liveAudioCtx.createGain();
-                    liveWetGain.gain.value = document.getElementById('myRevSlider').value / 100;
+                    liveWetGain.gain.value = (document.getElementById('myRevSlider').value / 100) * 3; // قوة صدى مضروبة بـ 3
 
                     liveDryGain = liveAudioCtx.createGain();
                     liveDryGain.gain.value = 1;
@@ -1872,22 +1883,33 @@
                             guestAnalyser.fftSize = 256;
                             guestSourceNode.connect(guestAnalyser);
 
-                            guestNoiseFilter = liveAudioCtx.createGain(); 
+                                                        guestNoiseFilter = liveAudioCtx.createGain(); 
                             let checkGuestGate = () => {
                                 requestAnimationFrame(checkGuestGate);
                                 const data = new Uint8Array(guestAnalyser.frequencyBinCount);
                                 guestAnalyser.getByteFrequencyData(data);
-                                let sum = 0; for(let i=0; i<data.length; i++) sum += data[i];
-                                let threshold = parseInt(document.getElementById('guestNoiseSlider').value) * 1.5;
-                                guestNoiseFilter.gain.setTargetAtTime((sum / data.length) >= threshold ? 1 : 0, liveAudioCtx.currentTime, 0.05);
+                                
+                                let maxVol = 0;
+                                for(let i=0; i<data.length; i++) {
+                                    if(data[i] > maxVol) maxVol = data[i];
+                                }
+                                
+                                let threshold = (parseInt(document.getElementById('guestNoiseSlider').value) / 100) * 200;
+
+                                if (maxVol >= threshold) {
+                                    guestNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.01);
+                                } else {
+                                    guestNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.15);
+                                }
                             };
                             checkGuestGate();
+
 
                             guestReverbNode = liveAudioCtx.createConvolver(); 
                             guestReverbNode.buffer = generateReverb(liveAudioCtx);
 
                             guestWetGain = liveAudioCtx.createGain(); 
-                            guestWetGain.gain.value = document.getElementById('guestRevSlider').value / 100;
+                            guestWetGain.gain.value = (document.getElementById('guestRevSlider').value / 100) * 3; // قوة صدى مضروبة بـ 3 للضيف
 
                             guestDryGain = liveAudioCtx.createGain(); 
                             guestDryGain.gain.value = 1;
@@ -1918,7 +1940,7 @@
                             };
                             document.getElementById('guestRevSlider').oninput = e => { 
                                 document.getElementById('guestRevVal').innerText=e.target.value+'%'; 
-                                guestWetGain.gain.value = e.target.value/100; 
+                                guestWetGain.gain.value = (e.target.value/100) * 3; // مضاعفة القوة بـ 3
                             };
                             
                             const muteBtn = document.getElementById('muteGuestBtn');
@@ -2011,7 +2033,7 @@
             document.getElementById('myRevSlider').oninput = (e) => {
                 const val = e.target.value;
                 document.getElementById('myRevVal').innerText = val + '%';
-                if(liveWetGain) liveWetGain.gain.value = val / 100;
+                if(liveWetGain) liveWetGain.gain.value = (val / 100) * 3; // مضاعفة القوة بـ 3
             };
         }
 

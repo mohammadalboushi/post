@@ -923,16 +923,27 @@
                 player.loadVideoById(data.url, data.time);
             }
 
-            // تطبيق حجم الصوت المرسل من مكسر المدير فوراً
+            // كتم الصوت كلياً أو تحديد مستواه بدقة لمنع رجوعه لحاله
             if(data.volume !== undefined && player.setVolume) {
-                player.setVolume(data.volume);
+                if(data.volume == 0) {
+                    player.mute();
+                } else {
+                    player.unMute();
+                    player.setVolume(data.volume);
+                }
             }
 
             if (data.state === 'playing') {
                 player.playVideo();
-                // المزامنة إذا كان الفارق أكثر من ثانيتين ونصف
-                const diff = Math.abs(player.getCurrentTime() - data.time);
-                if (diff > 2.5) player.seekTo(data.time, true); 
+                
+                // حساب الفارق الزمني بدقة مع النت لمنع تقطيع الصوت وخنقته
+                let expectedTime = data.time + ((Date.now() - data.ts) / 1000);
+                const diff = Math.abs(player.getCurrentTime() - expectedTime);
+                
+                // منع التقديم المستمر (السبب وراء تقطيع الصوت كل 4 ثواني)
+                if (diff > 4) {
+                    player.seekTo(expectedTime, true); 
+                }
             } else if (data.state === 'paused') {
                 player.pauseVideo();
             }
