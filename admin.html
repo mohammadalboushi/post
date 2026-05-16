@@ -1165,8 +1165,19 @@
 
 
         // --- دوال الصدى والتسجيل ---
+                // متغيرات التسجيل والصدى
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedAudioBlob = null;
+        let audioCtx = null;
+        let mediaElementSource = null;
+        let wetGainNode = null;
+        let dryGainNode = null;
+        let convolverNode = null;
+
+        // دالة توليد صدى احترافي (ناعم وأحلى من قبل)
         function generateReverb(ctx) {
-            const length = ctx.sampleRate * 1.5; 
+            const length = ctx.sampleRate * 2.0; // غرفة 2 ثانية (حجم ممتاز)
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
             const left = impulse.getChannelData(0);
             const right = impulse.getChannelData(1);
@@ -1193,21 +1204,96 @@
                 
                 const lowCut = audioCtx.createBiquadFilter();
                 lowCut.type = "highpass";
-                lowCut.frequency.value = 743;
+                lowCut.frequency.value = 400; // تنظيف الصوت من الضجة الخشنة بالصدى
                 
+                const highCut = audioCtx.createBiquadFilter();
+                highCut.type = "lowpass";
+                highCut.frequency.value = 4000; // تنعيم الصدى مشان ما يصفر ويكون دافي
+
                 const preDelay = audioCtx.createDelay();
-                preDelay.delayTime.value = 0.3;
+                preDelay.delayTime.value = 0.15; // تأخير 150 ملي ثانية (أحلى للصوت البشري)
 
                 mediaElementSource.connect(dryGainNode);
                 dryGainNode.connect(audioCtx.destination);
 
                 mediaElementSource.connect(preDelay);
                 preDelay.connect(lowCut);
-                lowCut.connect(convolverNode);
+                lowCut.connect(highCut);
+                highCut.connect(convolverNode);
                 convolverNode.connect(wetGainNode);
                 wetGainNode.connect(audioCtx.destination);
             }
             if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // تحويل صاروخي للصوت لمنع تعليق المتصفح
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+            length = len * numOfChan * 2 + 44,
+            buffer = new ArrayBuffer(length),
+            view = new DataView(buffer),
+            channels = [], i, sample, offset = 0, pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
+            setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
+            setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
+
+            for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+
+            const int16View = new Int16Array(buffer, 44);
+            let writePos = 0;
+            while(offset < len) {
+                for(i = 0; i < numOfChan; i++) {
+                    sample = channels[i][offset];
+                    sample = sample < -1 ? -1 : (sample > 1 ? 1 : sample);
+                    int16View[writePos++] = sample < 0 ? sample * 32768 : sample * 32767;
+                }
+                offset++;
+            }
+            return new Blob([buffer], {type: "audio/wav"});
+        }
+
+        async function applyReverbAndGetBlob(blob, reverbValue) {
+            if (reverbValue == 0) return blob;
+            const arrayBuffer = await blob.arrayBuffer();
+            const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+            
+            const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels || 2, audioBuffer.length + (audioBuffer.sampleRate * 2.0), audioBuffer.sampleRate);
+            
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            
+            const dry = offlineCtx.createGain();
+            const wet = offlineCtx.createGain();
+            wet.gain.value = reverbValue / 100;
+
+            const conv = offlineCtx.createConvolver();
+            conv.buffer = generateReverb(offlineCtx);
+
+            const lowCut = offlineCtx.createBiquadFilter();
+            lowCut.type = "highpass"; lowCut.frequency.value = 400;
+
+            const highCut = offlineCtx.createBiquadFilter();
+            highCut.type = "lowpass"; highCut.frequency.value = 4000;
+
+            const preDelay = offlineCtx.createDelay();
+            preDelay.delayTime.value = 0.15;
+
+            source.connect(dry); dry.connect(offlineCtx.destination);
+            source.connect(preDelay); preDelay.connect(lowCut);
+            lowCut.connect(highCut); highCut.connect(conv);
+            conv.connect(wet); wet.connect(offlineCtx.destination);
+
+            source.start();
+            const renderedBuffer = await offlineCtx.startRendering();
+            if(tempCtx.state !== 'closed') tempCtx.close();
+            
+            return bufferToWave(renderedBuffer, renderedBuffer.length);
         }
 
         document.getElementById('reverbSlider').addEventListener('input', (e) => {
@@ -1216,13 +1302,30 @@
             if(wetGainNode) wetGainNode.gain.value = val / 100;
         });
 
+        // تشغيل الملف المرفوع من الجهاز مع إظهار عداد الصدى
+        document.getElementById('postAudioFile').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                initAudioContext();
+                const fileURL = URL.createObjectURL(this.files[0]);
+                const preview = document.getElementById('audioPreview');
+                preview.src = fileURL;
+                preview.style.display = 'block';
+                
+                document.getElementById('reverbControl').style.display = 'block';
+                document.getElementById('reverbSlider').value = 0;
+                document.getElementById('reverbValueTxt').innerText = '0%';
+                if(wetGainNode) wetGainNode.gain.value = 0;
+            }
+        });
+
+        // التسجيل المباشر بخام وجودة عالية (منعنا فلاتر المتصفح) مع تفعيل الصدى
         document.getElementById('startRecordBtn').onclick = async () => {
             try {
                 initAudioContext(); 
-
-                // طلب المايك ببساطة بدون أي فلاتر غبية تخنق الصوت
-                // هيك المتصفح بياخد سماعة السلك فوراً، والمايك بياخد حساسيته الطبيعية العالية
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // طلب الصوت خام 100% ليضل صافي وما ينخنق
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+                });
 
                 mediaRecorder = new MediaRecorder(stream);
                 mediaRecorder.start();
@@ -1258,97 +1361,7 @@
             }
         };
 
-        // دالة تحويل الصوت (نسخة صاروخية لمنع تعليق المتصفح)
-        function bufferToWave(abuffer, len) {
-            let numOfChan = abuffer.numberOfChannels,
-            length = len * numOfChan * 2 + 44,
-            buffer = new ArrayBuffer(length),
-            view = new DataView(buffer),
-            channels = [], i, sample, offset = 0, pos = 0;
-
-            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-
-            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-            setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-            setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
-            setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
-
-            for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
-
-            // السر هون: معالجة سريعة بالذاكرة المباشرة 
-            const int16View = new Int16Array(buffer, 44);
-            let writePos = 0;
-            
-            while(offset < len) {
-                for(i = 0; i < numOfChan; i++) {
-                    sample = channels[i][offset];
-                    sample = sample < -1 ? -1 : (sample > 1 ? 1 : sample);
-                    int16View[writePos++] = sample < 0 ? sample * 32768 : sample * 32767;
-                }
-                offset++;
-            }
-            return new Blob([buffer], {type: "audio/wav"});
-        }
-
-        async function applyReverbAndGetBlob(blob, reverbValue) {
-            if (reverbValue == 0) return blob;
-            
-            const arrayBuffer = await blob.arrayBuffer();
-            
-            // السر هون: خلقنا بيئة معالجة جديدة ومستقلة تماماً مشان ما يعلق المتصفح
-            const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-            
-            const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels || 2, audioBuffer.length + (audioBuffer.sampleRate * 1.5), audioBuffer.sampleRate);
-            
-            const source = offlineCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            
-            const dry = offlineCtx.createGain();
-            const wet = offlineCtx.createGain();
-            wet.gain.value = reverbValue / 100;
-
-            const conv = offlineCtx.createConvolver();
-            conv.buffer = generateReverb(offlineCtx);
-
-            const lowCut = offlineCtx.createBiquadFilter();
-            lowCut.type = "highpass"; lowCut.frequency.value = 743;
-
-            const preDelay = offlineCtx.createDelay();
-            preDelay.delayTime.value = 0.3;
-
-            source.connect(dry); dry.connect(offlineCtx.destination);
-            source.connect(preDelay); preDelay.connect(lowCut);
-            lowCut.connect(conv); conv.connect(wet); wet.connect(offlineCtx.destination);
-
-            source.start();
-            const renderedBuffer = await offlineCtx.startRendering();
-            
-            // إغلاق البيئة المؤقتة لتنظيف الذاكرة
-            if(tempCtx.state !== 'closed') tempCtx.close();
-            
-            return bufferToWave(renderedBuffer, renderedBuffer.length);
-        }
-
-        // كود جديد: لتشغيل الملف المرفوع من الجهاز وإظهار عداد الصدى
-        document.getElementById('postAudioFile').addEventListener('change', function() {
-            if (this.files.length > 0) {
-                initAudioContext();
-                const fileURL = URL.createObjectURL(this.files[0]);
-                const preview = document.getElementById('audioPreview');
-                preview.src = fileURL;
-                preview.style.display = 'block';
-                
-                // إظهار العداد وتصفيره
-                document.getElementById('reverbControl').style.display = 'block';
-                document.getElementById('reverbSlider').value = 0;
-                document.getElementById('reverbValueTxt').innerText = '0%';
-                if(wetGainNode) wetGainNode.gain.value = 0;
-            }
-        });
-
-        // دالة النشر المعدلة لتطبيق الصدى على كل شيء
+        // النشر والرفع الصاروخي مع دمج الصدى
         document.getElementById('publishBtn').onclick = async () => {
             const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
@@ -1378,13 +1391,12 @@
                 const reverbVal = document.getElementById('reverbSlider').value;
 
                 if (audioToUpload) {
-                    // هون شلنا الشرط اللي كان يمنع الملفات المرفوعة، صار يطبق على الكل
                     if (reverbVal > 0) {
                         btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري دمج الصدى...`;
                         audioToUpload = await applyReverbAndGetBlob(audioToUpload, reverbVal);
                     }
                     
-                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري الرفع...`;
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري رفع الصوت...`;
                     const audioData = new FormData();
                     audioData.append("file", audioToUpload);
                     audioData.append("upload_preset", "malaboushi_preset"); 
@@ -1414,6 +1426,7 @@
                 btn.innerHTML = `<i class="fas fa-paper-plane"></i> نشر`;
             }
         };
+
 
         window.editPost = (id) => {
             editingPostId = id;
