@@ -998,7 +998,7 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
         
         // توليد ID فريد للزائر
         const visitorId = "user_" + Math.floor(Math.random() * 1000000);
-        let visitorName = localStorage.getItem('visitorName') || "";
+        let visitorName = ""; // خليناه فاضي دايماً ليطلب الاسم بكل تحديث
 
         // 1. مراقبة البث من القاعدة (Firebase)
         onValue(ref(db, 'liveData/status'), (snap) => {
@@ -1036,7 +1036,7 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
                     const n = document.getElementById('tempNameInput').value.trim();
                     if(n) {
                         visitorName = n;
-                        localStorage.setItem('visitorName', visitorName);
+                        
                         namePrompt.remove();
                         executeJoin();
                     } else {
@@ -1160,8 +1160,7 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
                 return;
             }
             visitorName = nameInput;
-            localStorage.setItem('visitorName', visitorName);
-            
+                        
             // رفع الطلب للقاعدة
             set(ref(db, `liveData/requests/${visitorId}`), {
                 name: visitorName,
