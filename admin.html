@@ -1060,6 +1060,28 @@
         </div>
     </div>
 
+    <div id="mediaSelectorModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-music"></i> مشاركة محتوى للزوار</span> <button class="close-mixer" onclick="document.getElementById('mediaSelectorModal').style.display='none'">×</button></h3>
+            <div class="field">
+                <label class="field-label">رابط يوتيوب</label>
+                <input type="text" id="ytLinkInput" placeholder="ضع رابط يوتيوب هنا..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink);">
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn btn-primary" onclick="startSharedMedia('youtube', 'video')" style="flex:1; justify-content:center;"><i class="fas fa-video"></i> تشغيل كفيديو</button>
+                <button class="btn btn-danger-soft" onclick="startSharedMedia('youtube', 'audio')" style="flex:1; justify-content:center;"><i class="fas fa-headphones"></i> تشغيل كصوت</button>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--ink-faint); text-align: center;">سيعمل المحتوى عندك وعند الزوار بالتزامن مع إمكانية التقديم والتأخير.</p>
+        </div>
+    </div>
+
+    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px;">
+        <div style="position: absolute; top: 5px; left: 10px; z-index: 10;">
+            <button class="btn btn-danger-soft" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(239,68,68,0.8); color: white;" onclick="stopSharedMedia()"><i class="fas fa-times"></i> إيقاف للكل</button>
+        </div>
+        <div id="ytAdminContainer" style="width:100%; height:200px;"></div>
+    </div>
+
     <div id="adminMixerModal" class="mixer-modal">
         <div class="mixer-box">
             <h3><span><i class="fas fa-sliders-h"></i> إعداداتي (المدير)</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">&times;</button></h3>
@@ -1734,8 +1756,6 @@
                     let adminAnalyser = liveAudioCtx.createAnalyser();
                     adminAnalyser.fftSize = 256;
                     liveSourceNode.connect(adminAnalyser);
-                    adminAnalyser.fftSize = 256;
-                    liveSourceNode.connect(adminAnalyser);
 
                     liveNoiseFilter = liveAudioCtx.createGain(); 
                     
@@ -2100,6 +2120,69 @@
                 countSpan.innerText = data ? Object.keys(data).length : '0';
             }
         });
+
+        // دوال ميزة اليوتيوب والميديا
+        window.openMediaSelector = () => {
+            document.getElementById('mediaSelectorModal').style.display = 'flex';
+        };
+
+        // استدعاء مكتبة يوتيوب
+        const ytTag = document.createElement('script');
+        ytTag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(ytTag, firstScriptTag);
+
+        let ytPlayerAdmin;
+        let syncInterval;
+
+        window.onYouTubeIframeAPIReady = () => {
+            ytPlayerAdmin = new YT.Player('ytAdminContainer', {
+                height: '100%', width: '100%',
+                playerVars: { 'controls': 1, 'disablekb': 1 },
+                events: { 'onStateChange': onAdminPlayerStateChange }
+            });
+        };
+
+        function onAdminPlayerStateChange(event) {
+            if(!isLive) return;
+            const state = event.data === YT.PlayerState.PLAYING ? 'playing' : (event.data === YT.PlayerState.PAUSED ? 'paused' : 'other');
+            if(state === 'playing' || state === 'paused') {
+                update(ref(db, 'liveData/media'), { state: state, time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
+            }
+        }
+
+        window.startSharedMedia = (type, display) => {
+            if(!isLive) return showToast("يجب بدء البث أولاً!", "error");
+            document.getElementById('mediaSelectorModal').style.display = 'none';
+            
+            const rawUrl = document.getElementById('ytLinkInput').value;
+            const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/);
+            if(!match) return showToast("رابط يوتيوب غير صالح", "error");
+            
+            const url = match[1];
+            document.getElementById('adminSharedPlayer').style.display = 'block';
+            
+            if(ytPlayerAdmin && ytPlayerAdmin.loadVideoById) {
+                ytPlayerAdmin.loadVideoById(url);
+            }
+
+            // رفع حالة الميديا لقاعدة البيانات ليلقطوها الزوار
+            set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, ts: Date.now() });
+            
+            // مزامنة مستمرة للوقت مشان ما يفصلوا الزوار
+            syncInterval = setInterval(() => {
+                if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState() === YT.PlayerState.PLAYING) {
+                    update(ref(db, 'liveData/media'), { time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
+                }
+            }, 3000);
+        };
+
+        window.stopSharedMedia = () => {
+            document.getElementById('adminSharedPlayer').style.display = 'none';
+            if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) ytPlayerAdmin.stopVideo();
+            clearInterval(syncInterval);
+            remove(ref(db, 'liveData/media')); 
+        };
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>

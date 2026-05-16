@@ -630,6 +630,9 @@
                 <h3 class="live-modal-title"><i class="fas fa-broadcast-tower" style="color: var(--danger); margin-left: 8px;"></i> التفاعل المباشر</h3>
                 <button class="btn-close-modal" onclick="closeLiveInteraction()"><i class="fas fa-times"></i> خروج</button>
             </div>
+            <div id="visitorMediaContainer" style="display: none; width: 100%; border-bottom: 1px solid var(--border); background: #000; transition: height 0.3s;">
+                <div id="ytVisitorPlayer" style="width: 100%; height: 200px;"></div>
+            </div>
 
             <div class="live-tabs">
                 <div class="live-tab active" onclick="switchLiveTab('chat')">الدردشة</div>
@@ -863,6 +866,73 @@
                 await rtcClient.publish([localMicTrack]);
             }
         });
+        
+                // مشغل اليوتيوب للزوار والمزامنة مع المدير
+        const ytTag = document.createElement('script');
+        ytTag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(ytTag, firstScriptTag);
+
+        let ytPlayerVisitor;
+        let isYtReady = false;
+
+        window.onYouTubeIframeAPIReady = () => {
+            isYtReady = true;
+        };
+
+        // مراقبة الميديا من الفايربيس (يتم التحكم بها من طرف المدير)
+        onValue(ref(db, 'liveData/media'), (snap) => {
+            const data = snap.val();
+            const container = document.getElementById('visitorMediaContainer');
+            
+            if (!data) {
+                if(container) container.style.display = 'none';
+                if (ytPlayerVisitor && ytPlayerVisitor.stopVideo) ytPlayerVisitor.stopVideo();
+                return;
+            }
+
+            if(container) {
+                container.style.display = 'block';
+                // إخفاء الفيديو إذا كان المطلوب "صوت" فقط
+                if (data.display === 'audio') {
+                    container.style.height = '0px';
+                    container.style.border = 'none';
+                } else {
+                    container.style.height = 'auto';
+                    container.style.borderBottom = '1px solid var(--border)';
+                }
+            }
+
+            if (!ytPlayerVisitor && isYtReady) {
+                ytPlayerVisitor = new YT.Player('ytVisitorPlayer', {
+                    height: '100%', width: '100%',
+                    videoId: data.url,
+                    playerVars: { 'controls': 0, 'disablekb': 1, 'rel': 0, 'playsinline': 1 },
+                    events: {
+                        'onReady': (e) => syncVisitorPlayer(e.target, data)
+                    }
+                });
+            } else if (ytPlayerVisitor && ytPlayerVisitor.getVideoData) {
+                syncVisitorPlayer(ytPlayerVisitor, data);
+            }
+        });
+
+        function syncVisitorPlayer(player, data) {
+            const currentUrl = player.getVideoData().video_id;
+            if (currentUrl !== data.url) {
+                player.loadVideoById(data.url, data.time);
+            }
+
+            if (data.state === 'playing') {
+                player.playVideo();
+                // المزامنة إذا كان الفارق أكثر من ثانيتين ونصف
+                const diff = Math.abs(player.getCurrentTime() - data.time);
+                if (diff > 2.5) player.seekTo(data.time, true); 
+            } else if (data.state === 'paused') {
+                player.pauseVideo();
+            }
+        }
+
     </script>
 </body>
 </html>
