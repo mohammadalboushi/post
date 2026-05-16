@@ -47,6 +47,10 @@
             min-height: 100vh;
         }
 
+        body.studio-open {
+            overflow: hidden; /* لمنع تمرير الموقع أثناء فتح الاستوديو */
+        }
+
         /* Subtle grid background */
         body::before {
             content: '';
@@ -206,23 +210,32 @@
             z-index: 10;
         }
 
-        .topbar-title { font-size: 0.9rem; font-weight: 700; color: var(--ink-muted); }
+        .topbar-title { font-size: 0.9rem; font-weight: 700; color: var(--ink-muted); white-space: nowrap;}
         .topbar-title span { color: var(--ink); }
 
-        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+        .topbar-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px; /* لجمالية التمرير */
+        }
+        .topbar-actions::-webkit-scrollbar { display: none; } /* إخفاء شريط التمرير إذا صغرت الشاشة */
 
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
+            gap: 6px;
+            padding: 6px 12px;
             border-radius: var(--radius-sm);
             font-family: inherit;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.15s;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -764,31 +777,26 @@
             .editor-pane { border-left: none; border-bottom: 1px solid var(--border); }
         }
 
-        /* ==================== LIVE STUDIO (Agora) ==================== */
+        /* ==================== LIVE STUDIO (Agora) & MIXERS MODALS ==================== */
         #liveStudioModal { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; flex-direction: column; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .studio-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .studio-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;}
         .studio-status { display: flex; align-items: center; gap: 12px; }
         .live-dot { width: 12px; height: 12px; background: var(--danger); border-radius: 50%; box-shadow: 0 0 10px var(--danger); animation: pulse 1s infinite; display: none; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
         .live-timer { font-size: 1.2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
         
-        .studio-body { display: grid; grid-template-columns: 1fr 350px; flex: 1; overflow: hidden; }
+        .studio-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        .studio-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         
-        .audio-controls { padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .visualizer-container { height: 100px; background: var(--surface-2); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .visualizer-container { height: 80px; background: var(--surface-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
         canvas#audioVisualizer { width: 100%; height: 100%; }
         
-        .control-box { background: var(--surface-2); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
-        .control-box h3 { font-size: 0.85rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--ink); }
-        .slider-group { margin-bottom: 12px; }
-        .slider-group label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--ink-muted); margin-bottom: 6px; }
-        .slider-group input[type="range"] { width: 100%; accent-color: var(--accent); }
-        
-        .interaction-panel { border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; }
+        .interaction-panel { flex: 1; display: flex; flex-direction: column; background: var(--surface); }
         .tabs { display: flex; border-bottom: 1px solid var(--border); }
-        .tab { flex: 1; text-align: center; padding: 16px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--ink-muted); border-bottom: 2px solid transparent; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--ink-muted); border-bottom: 2px solid transparent; transition: all 0.2s;}
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface-2); }
         .tab .badge { background: var(--danger); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; margin-right: 4px; display: none; }
         
@@ -803,10 +811,17 @@
         .request-item { background: var(--surface-2); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .request-actions { display: flex; gap: 6px; }
 
-        @media (max-width: 900px) {
-            .studio-body { grid-template-columns: 1fr; }
-            .interaction-panel { border-right: none; border-top: 1px solid var(--border); height: 50vh; }
-        }
+        /* Mixer Modals */
+        .mixer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .mixer-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 90%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .mixer-box h3 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 1.1rem; color: var(--ink); }
+        .close-mixer { background: transparent; border: none; color: var(--ink-muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s;}
+        .close-mixer:hover { color: var(--danger); }
+        
+        .slider-group { margin-bottom: 16px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--ink-muted); margin-bottom: 8px; }
+        .slider-group input[type="range"] { width: 100%; accent-color: var(--accent); }
+
     </style>
 </head>
 <body>
@@ -861,7 +876,10 @@
         <main class="main">
             <div class="topbar">
                 <div class="topbar-title">إدارة / <span>المنشورات</span></div>
-                                <div class="topbar-actions">
+                <div class="topbar-actions">
+                    <button class="btn btn-ghost" onclick="document.querySelector('.list-pane').scrollIntoView({behavior:'smooth'})">
+                        <i class="fas fa-list"></i> المنشورات
+                    </button>
                     <button class="btn btn-primary" id="installAppBtn" style="display: none;">
                         <i class="fas fa-download"></i> تثبيت التطبيق
                     </button>
@@ -993,59 +1011,25 @@
             <div class="studio-status">
                 <div class="live-dot" id="liveIndicator"></div>
                 <div class="live-timer" id="liveTimer">00:00</div>
-<div style="color: var(--accent); font-weight: bold; margin-right: 15px; font-size: 0.9rem;"><i class="fas fa-eye"></i> <span id="viewersCount">0</span> مستمع</div>
-                <span id="liveStatusText" style="font-weight: 700; color: var(--ink-muted);">جاهز للبث</span>
+                <div style="color: var(--accent); font-weight: bold; font-size: 0.85rem;"><i class="fas fa-eye"></i> <span id="viewersCount">0</span></div>
             </div>
-            <div style="display: flex; gap: 10px;">
+            
+            <div class="studio-toolbar">
+                <button class="btn btn-ghost" onclick="document.getElementById('adminMixerModal').style.display='flex'">
+                    <i class="fas fa-sliders-h"></i> مكسري
+                </button>
+                <button class="btn btn-ghost" onclick="document.getElementById('guestMixerModal').style.display='flex'">
+                    <i class="fas fa-headphones"></i> مكسر الضيف
+                </button>
                 <button class="btn btn-primary" id="startLiveBtn"><i class="fas fa-play"></i> بدء البث</button>
                 <button class="btn btn-danger-soft" id="stopLiveBtn" style="display: none;"><i class="fas fa-stop"></i> إنهاء</button>
-                <button class="btn btn-ghost" id="closeStudioBtn"><i class="fas fa-times"></i> تصغير الاستوديو</button>
+                <button class="btn btn-ghost" id="closeStudioBtn"><i class="fas fa-times"></i> إغلاق</button>
             </div>
         </div>
 
         <div class="studio-body">
-            <div class="audio-controls">
-                <div class="visualizer-container">
-                    <canvas id="audioVisualizer"></canvas>
-                </div>
-
-                <div class="control-box">
-                    <h3><i class="fas fa-sliders-h"></i> مكسر الصوت (المدير)</h3>
-                    
-                    <div class="slider-group mt-3">
-                        <label><span>قوة صوتي (Mic)</span><span id="myVolVal">100%</span></label>
-                        <input type="range" id="myVolSlider" min="0" max="150" value="100">
-                    </div>
-                    
-                    <div class="slider-group">
-                        <label><span>عزل الضجيج والهواء (Noise Gate)</span><span id="noiseVal">0%</span></label>
-                        <input type="range" id="noiseSlider" min="0" max="100" value="0">
-                    </div>
-
-                    <div class="slider-group">
-                        <label><span>مستوى الصدى (Reverb)</span><span id="myRevVal">0%</span></label>
-                        <input type="range" id="myRevSlider" min="0" max="100" value="0">
-                    </div>
-
-                    <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
-                        <label><span style="color: var(--accent);"><i class="fas fa-headphones"></i> أسمع حالي (Monitor)</span><span id="monitorVal">0%</span></label>
-                        <input type="range" id="monitorSlider" min="0" max="100" value="0">
-                    </div>
-                </div>
-
-                <div class="control-box" id="coHostSection" style="opacity: 0.5; pointer-events: none;">
-                    <h3><i class="fas fa-user-friends"></i> إعدادات الضيف</h3>
-                    <div style="font-size: 0.75rem; color: var(--ink-faint); margin-bottom: 10px;" id="coHostName">لا يوجد ضيف حالياً</div>
-                    
-                    <div class="slider-group">
-                        <label><span>صوت الضيف</span><span id="guestVolVal">100%</span></label>
-                        <input type="range" id="guestVolSlider" min="0" max="150" value="100">
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="btn btn-ghost" style="flex: 1; font-size: 0.7rem;"><i class="fas fa-microphone-slash"></i> كتم</button>
-                        <button class="btn btn-danger-soft" style="flex: 1; font-size: 0.7rem;"><i class="fas fa-sign-out-alt"></i> إنزال</button>
-                    </div>
-                </div>
+            <div class="visualizer-container">
+                <canvas id="audioVisualizer" style="width: 100%; height: 100%;"></canvas>
             </div>
 
             <div class="interaction-panel">
@@ -1060,7 +1044,7 @@
                     </div>
                     <div class="chat-input-area">
                         <input type="text" id="chatInput" class="search-input" placeholder="اكتب رسالة للمستمعين...">
-                        <button class="btn btn-primary" style="padding: 8px 12px;"><i class="fas fa-paper-plane"></i></button>
+                        <button class="btn btn-primary" style="padding: 8px 12px;" onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
 
@@ -1069,6 +1053,52 @@
                         <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminMixerModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-sliders-h"></i> إعداداتي (المدير)</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">&times;</button></h3>
+            <div class="slider-group">
+                <label><span>قوة صوتي (Mic)</span><span id="myVolVal">100%</span></label>
+                <input type="range" id="myVolSlider" min="0" max="150" value="100">
+            </div>
+            <div class="slider-group">
+                <label><span>عزل الضجيج (Noise Gate)</span><span id="noiseVal">0%</span></label>
+                <input type="range" id="noiseSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group">
+                <label><span>مستوى الصدى (Reverb)</span><span id="myRevVal">0%</span></label>
+                <input type="range" id="myRevSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <label><span style="color: var(--accent);"><i class="fas fa-headphones"></i> أسمع حالي (Monitor)</span><span id="monitorVal">0%</span></label>
+                <input type="range" id="monitorSlider" min="0" max="100" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div id="guestMixerModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-headphones"></i> إعدادات الضيف</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">&times;</button></h3>
+            <div style="font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 15px; text-align: center;" id="coHostName">لا يوجد ضيف حالياً</div>
+            
+            <div class="slider-group">
+                <label><span>قوة صوت الضيف</span><span id="guestVolVal">100%</span></label>
+                <input type="range" id="guestVolSlider" min="0" max="150" value="100">
+            </div>
+            <div class="slider-group">
+                <label><span>عزل ضجيج الضيف</span><span id="guestNoiseVal">0%</span></label>
+                <input type="range" id="guestNoiseSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group">
+                <label><span>صدى الضيف</span><span id="guestRevVal">0%</span></label>
+                <input type="range" id="guestRevSlider" min="0" max="100" value="0">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-ghost" id="muteGuestBtn" style="flex: 1;"><i class="fas fa-microphone-slash"></i> كتم</button>
+                <button class="btn btn-danger-soft" id="kickGuestBtn" style="flex: 1;"><i class="fas fa-sign-out-alt"></i> إنزال</button>
             </div>
         </div>
     </div>
@@ -1612,7 +1642,7 @@
             });
         };
 
-        //         // ==========================================
+        // ==========================================
         // مكسر استوديو البث المباشر (Agora + Web Audio API)
         // ==========================================
         const AGORA_APP_ID = "7ca23eb56dfd45f7a89e9fd2a03a40ca"; 
@@ -1623,7 +1653,7 @@
         let liveTimerInterval;
         let seconds = 0;
 
-        // متغيرات المكسر المباشر
+        // متغيرات المكسر المباشر للمدير
         let liveAudioCtx;
         let liveMicStream;
         let liveSourceNode;
@@ -1634,6 +1664,16 @@
         let liveMasterGain;
         let liveMonitorGain;
         let liveDest;
+
+        // متغيرات المكسر للضيف
+        let guestMediaStream;
+        let guestSourceNode;
+        let guestNoiseFilter;
+        let guestReverbNode;
+        let guestWetGain;
+        let guestDryGain;
+        let guestMasterGain;
+        
         let liveAnalyser;
 
         const studioModal = document.getElementById('liveStudioModal');
@@ -1641,6 +1681,7 @@
         if(document.getElementById('openStudioBtn')) {
             document.getElementById('openStudioBtn').onclick = () => {
                 studioModal.style.display = 'flex';
+                document.body.classList.add('studio-open');
                 history.pushState(null, null, location.href); 
             };
         }
@@ -1648,12 +1689,10 @@
         if(document.getElementById('closeStudioBtn')) {
             document.getElementById('closeStudioBtn').onclick = () => {
                 if(isLive) {
-                    if(confirm("البث شغال! متأكد بدك تطلع وتنهي البث؟")) {
-                        stopLive();
-                        studioModal.style.display = 'none';
-                    }
+                    showToast("يرجى إنهاء البث أولاً للتأكد.", "error");
                 } else {
                     studioModal.style.display = 'none';
+                    document.body.classList.remove('studio-open');
                 }
             };
         }
@@ -1661,7 +1700,7 @@
         window.onpopstate = function () {
             if (studioModal && studioModal.style.display === 'flex') {
                 history.pushState(null, null, location.href);
-                showToast("استخدم زر 'تصغير الاستوديو' بدلاً من زر الرجوع.", "error");
+                showToast("استخدم زر 'إغلاق' بدلاً من زر الرجوع.", "error");
             }
         };
 
@@ -1672,7 +1711,7 @@
             document.getElementById(`tab-${tab}`).classList.add('active');
         };
 
-        // بدء البث وتجهيز المكسر الاحترافي بالسلايدرات
+        // بدء البث وتجهيز المكسرات
         if(document.getElementById('startLiveBtn')) {
             document.getElementById('startLiveBtn').onclick = async () => {
                 try {
@@ -1681,14 +1720,14 @@
                     rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                     await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, "admin_uid");
                     
-                    // 1. تشغيل المكسر وسحب المايك خام
+                    // 1. تشغيل المكسر وسحب المايك خام للمدير
                     liveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     liveMicStream = await navigator.mediaDevices.getUserMedia({ 
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
                     });
                     liveSourceNode = liveAudioCtx.createMediaStreamSource(liveMicStream);
 
-                    // 2. إنشاء الفلاتر (الضجيج، الصدى، قوة الصوت، والمراقبة)
+                    // 2. إنشاء الفلاتر للمدير
                     liveNoiseFilter = liveAudioCtx.createBiquadFilter();
                     liveNoiseFilter.type = 'highpass';
                     liveNoiseFilter.frequency.value = (document.getElementById('noiseSlider').value / 100) * 800; 
@@ -1710,7 +1749,7 @@
 
                     liveDest = liveAudioCtx.createMediaStreamDestination();
 
-                    // 3. ربط الأسلاك بالمكسر
+                    // 3. ربط الأسلاك للمدير
                     liveSourceNode.connect(liveNoiseFilter);
                     liveNoiseFilter.connect(liveDryGain);
                     liveNoiseFilter.connect(liveReverbNode);
@@ -1719,10 +1758,7 @@
                     liveDryGain.connect(liveMasterGain);
                     liveWetGain.connect(liveMasterGain);
                     
-                    // سلك رايح للبث لـ Agora
                     liveMasterGain.connect(liveDest);
-                    
-                    // سلك رايح للسماعة (أسمع حالي)
                     liveMasterGain.connect(liveMonitorGain);
                     liveMonitorGain.connect(liveAudioCtx.destination);
 
@@ -1738,20 +1774,79 @@
                     document.getElementById('startLiveBtn').style.display = 'none';
                     document.getElementById('stopLiveBtn').style.display = 'inline-flex';
                     document.getElementById('liveIndicator').style.display = 'block';
-                    document.getElementById('liveStatusText').innerText = 'أنت على الهواء';
-                    document.getElementById('liveStatusText').style.color = 'var(--danger)';
                     
-                    // تصفير الدردشة والطلبات والمستمعين من الجذور مع كل بث جديد
-set(ref(db, 'liveData'), {
-    status: { isLive: true, startedAt: Date.now() }
-});
+                    set(ref(db, 'liveData'), {
+                        status: { isLive: true, startedAt: Date.now() }
+                    });
 
                     startTimer();
                     setupVisualizer();
 
+                    // 5. استقبال الضيف ودمجه بالمكسر الثاني
+                    rtcClient.on("user-published", async (user, mediaType) => {
+                        await rtcClient.subscribe(user, mediaType);
+                        if (mediaType === "audio") {
+                            guestMediaStream = new MediaStream([user.audioTrack.getMediaStreamTrack()]);
+                            guestSourceNode = liveAudioCtx.createMediaStreamSource(guestMediaStream);
+                            
+                            guestNoiseFilter = liveAudioCtx.createBiquadFilter(); 
+                            guestNoiseFilter.type = 'highpass'; 
+                            guestNoiseFilter.frequency.value = (document.getElementById('guestNoiseSlider').value / 100) * 800;
+
+                            guestReverbNode = liveAudioCtx.createConvolver(); 
+                            guestReverbNode.buffer = generateReverb(liveAudioCtx);
+
+                            guestWetGain = liveAudioCtx.createGain(); 
+                            guestWetGain.gain.value = document.getElementById('guestRevSlider').value / 100;
+
+                            guestDryGain = liveAudioCtx.createGain(); 
+                            guestDryGain.gain.value = 1;
+
+                            guestMasterGain = liveAudioCtx.createGain(); 
+                            guestMasterGain.gain.value = document.getElementById('guestVolSlider').value / 100;
+
+                            // الربط للضيف
+                            guestSourceNode.connect(guestNoiseFilter);
+                            guestNoiseFilter.connect(guestDryGain); 
+                            guestNoiseFilter.connect(guestReverbNode); 
+                            guestReverbNode.connect(guestWetGain);
+                            
+                            guestDryGain.connect(guestMasterGain); 
+                            guestWetGain.connect(guestMasterGain);
+                            
+                            // بث الضيف للأدمن ليسمعه، ولـ liveDest ليسمعه الجمهور مدموجاً
+                            guestMasterGain.connect(liveAudioCtx.destination); 
+                            guestMasterGain.connect(liveDest);
+
+                            // ربط سلايدرات الضيف ديناميكياً
+                            document.getElementById('guestVolSlider').oninput = e => { 
+                                document.getElementById('guestVolVal').innerText=e.target.value+'%'; 
+                                guestMasterGain.gain.value = e.target.value/100; 
+                            };
+                            document.getElementById('guestNoiseSlider').oninput = e => { 
+                                document.getElementById('guestNoiseVal').innerText=e.target.value+'%'; 
+                                guestNoiseFilter.frequency.value = (e.target.value/100)*800; 
+                            };
+                            document.getElementById('guestRevSlider').oninput = e => { 
+                                document.getElementById('guestRevVal').innerText=e.target.value+'%'; 
+                                guestWetGain.gain.value = e.target.value/100; 
+                            };
+                            
+                            const muteBtn = document.getElementById('muteGuestBtn');
+                            if(muteBtn) {
+                                let isMuted = false;
+                                muteBtn.onclick = function() {
+                                    isMuted = !isMuted;
+                                    guestMasterGain.gain.value = isMuted ? 0 : document.getElementById('guestVolSlider').value/100;
+                                    this.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i> كتم' : '<i class="fas fa-microphone"></i> إلغاء الكتم';
+                                };
+                            }
+                        }
+                    });
+
                 } catch (error) {
                     console.error("خطأ بالبث:", error);
-                    showToast("خطأ بالاتصال: تأكد من كود Agora ومن تفعيل نمط Testing Mode", "error");
+                    showToast("خطأ بالاتصال: تأكد من كود Agora", "error");
                     document.getElementById('startLiveBtn').innerHTML = '<i class="fas fa-play"></i> بدء البث';
                 }
             };
@@ -1771,8 +1866,6 @@ set(ref(db, 'liveData'), {
             document.getElementById('startLiveBtn').innerHTML = '<i class="fas fa-play"></i> بدء البث';
             document.getElementById('stopLiveBtn').style.display = 'none';
             document.getElementById('liveIndicator').style.display = 'none';
-            document.getElementById('liveStatusText').innerText = 'جاهز للبث';
-            document.getElementById('liveStatusText').style.color = 'var(--ink-muted)';
             
             set(ref(db, 'liveData/status'), { isLive: false });
         }
@@ -1788,7 +1881,7 @@ set(ref(db, 'liveData'), {
             }, 1000);
         }
 
-        // ربط الـ Sliders بالمكسر بدقة من 0 لـ 100
+        // ربط الـ Sliders للمدير
         if(document.getElementById('myVolSlider')) {
             document.getElementById('myVolSlider').oninput = (e) => {
                 const val = e.target.value;
@@ -1852,11 +1945,9 @@ set(ref(db, 'liveData'), {
             draw();
         }
         
-                // ==========================================
-        // دوال الدردشة والطلبات وصوت الضيف (لوحة الأدمن)
         // ==========================================
-        
-        // 1. إرسال رسالة من الأدمن
+        // دوال الدردشة والطلبات (لوحة الأدمن)
+        // ==========================================
         window.sendAdminChat = () => {
             const input = document.getElementById('chatInput');
             const msg = input.value.trim();
@@ -1870,13 +1961,6 @@ set(ref(db, 'liveData'), {
             input.value = '';
         };
 
-        // ربط زر الإرسال باللوحة
-        setTimeout(() => {
-            const chatBtn = document.querySelector('.chat-input-area .btn-primary');
-            if(chatBtn) chatBtn.onclick = window.sendAdminChat;
-        }, 1000);
-
-        // 2. استلام الدردشة وعرضها
         onValue(ref(db, 'liveData/chat'), (snap) => {
             const data = snap.val();
             const chatArea = document.getElementById('chatArea');
@@ -1898,7 +1982,6 @@ set(ref(db, 'liveData'), {
             }
         });
 
-        // 3. استلام الطلبات وإدارتها
         onValue(ref(db, 'liveData/requests'), (snap) => {
             const data = snap.val();
             const reqList = document.getElementById('requestsList');
@@ -1921,10 +2004,8 @@ set(ref(db, 'liveData'), {
                             </div>
                         `;
                     } else if (req.status === 'approved') {
-                        document.getElementById('coHostSection').style.opacity = '1';
-                        document.getElementById('coHostSection').style.pointerEvents = 'auto';
                         document.getElementById('coHostName').innerText = req.name;
-                        const dropBtn = document.querySelector('#coHostSection .btn-danger-soft');
+                        const dropBtn = document.getElementById('kickGuestBtn');
                         if(dropBtn) dropBtn.onclick = () => removeGuest(uid);
                     }
                 });
@@ -1939,47 +2020,13 @@ set(ref(db, 'liveData'), {
             } else {
                 reqBadge.style.display = 'none';
                 reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
-                document.getElementById('coHostSection').style.opacity = '0.5';
-                document.getElementById('coHostSection').style.pointerEvents = 'none';
                 document.getElementById('coHostName').innerText = "لا يوجد ضيف حالياً";
             }
         });
 
-        // 4. دوال الأزرار للضيوف وربط صوتهم
         window.acceptGuest = (uid, name) => {
             update(ref(db, `liveData/requests/${uid}`), { status: 'approved' });
             showToast("تم قبول " + name);
-            
-            // ربط صوت الضيف بالمكسر تبعك
-            if(rtcClient) {
-                rtcClient.on("user-published", async (user, mediaType) => {
-                    await rtcClient.subscribe(user, mediaType);
-                    if (mediaType === "audio") {
-                        user.audioTrack.play();
-                        
-                        // تفعيل سلايدر التحكم بصوت الضيف
-                        const guestVolSlider = document.getElementById('guestVolSlider');
-                        if(guestVolSlider) {
-                            guestVolSlider.oninput = (e) => {
-                                const val = e.target.value;
-                                document.getElementById('guestVolVal').innerText = val + '%';
-                                user.audioTrack.setVolume(parseInt(val));
-                            };
-                        }
-                        
-                        // تفعيل زر كتم الضيف
-                        const muteBtn = document.querySelector('#coHostSection .btn-ghost');
-                        if(muteBtn) {
-                            let isMuted = false;
-                            muteBtn.onclick = () => {
-                                isMuted = !isMuted;
-                                user.audioTrack.setVolume(isMuted ? 0 : document.getElementById('guestVolSlider').value);
-                                muteBtn.innerHTML = isMuted ? '<i class="fas fa-microphone"></i> إلغاء الكتم' : '<i class="fas fa-microphone-slash"></i> كتم';
-                            };
-                        }
-                    }
-                });
-            }
         };
 
         window.rejectGuest = (uid) => {
@@ -1991,7 +2038,6 @@ set(ref(db, 'liveData'), {
             showToast("تم إنزال الضيف");
         };
 
-        // استلام عدد المستمعين وعرضهم
         onValue(ref(db, 'liveData/viewers'), (snap) => {
             const data = snap.val();
             const countSpan = document.getElementById('viewersCount');
