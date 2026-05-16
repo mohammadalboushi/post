@@ -1015,6 +1015,9 @@
             </div>
             
             <div class="studio-toolbar">
+                <button class="btn btn-ghost" style="background: var(--warning); color: #000; font-weight: 900;" onclick="openMediaSelector()">
+                    <i class="fas fa-music"></i> مشاركة صوت/يوتيوب
+                </button>
                 <button class="btn btn-ghost" onclick="document.getElementById('adminMixerModal').style.display='flex'">
                     <i class="fas fa-sliders-h"></i> مكسري
                 </button>
@@ -1727,21 +1730,30 @@
                     });
                     liveSourceNode = liveAudioCtx.createMediaStreamSource(liveMicStream);
 
-                    // 2. إنشاء الفلاتر (بوابة الضجيج الحقيقية) للمدير
+                    /                    // 2. إنشاء الفلاتر (بوابة الضجيج الاحترافية) للمدير
                     let adminAnalyser = liveAudioCtx.createAnalyser();
                     adminAnalyser.fftSize = 256;
                     liveSourceNode.connect(adminAnalyser);
 
-                    liveNoiseFilter = liveAudioCtx.createGain(); // قلبناها لبوابة (Gate)
+                    liveNoiseFilter = liveAudioCtx.createGain(); 
+                    
                     let checkAdminGate = () => {
                         if(!isLive) return;
                         requestAnimationFrame(checkAdminGate);
+                        
                         const data = new Uint8Array(adminAnalyser.frequencyBinCount);
                         adminAnalyser.getByteFrequencyData(data);
-                        let sum = 0; for(let i=0; i<data.length; i++) sum += data[i];
-                        let threshold = parseInt(document.getElementById('noiseSlider').value) * 1.5; // الحساسية
-                        // إذا الصوت أعلى من الحساسية افتح البوابة (1)، وإذا أقل سكرها (0)
-                        liveNoiseFilter.gain.setTargetAtTime((sum / data.length) >= threshold ? 1 : 0, liveAudioCtx.currentTime, 0.05);
+                        
+                        let sum = 0; 
+                        for(let i=0; i<data.length; i++) sum += data[i];
+                        let averageVolume = sum / data.length;
+                        let threshold = parseInt(document.getElementById('noiseSlider').value) * 1.5; 
+                        
+                        if (averageVolume >= threshold) {
+                            liveNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.03); 
+                        } else {
+                            liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.1); 
+                        }
                     };
                     checkAdminGate();
 
@@ -1762,7 +1774,7 @@
 
                     liveDest = liveAudioCtx.createMediaStreamDestination();
 
-                    // 3. ربط الأسلاك للمدير
+                    // 3. ربط الأسلاك لتمر عبر البوابة الذكية
                     liveSourceNode.connect(liveNoiseFilter);
                     liveNoiseFilter.connect(liveDryGain);
                     liveNoiseFilter.connect(liveReverbNode);
@@ -1774,6 +1786,7 @@
                     liveMasterGain.connect(liveDest);
                     liveMasterGain.connect(liveMonitorGain);
                     liveMonitorGain.connect(liveAudioCtx.destination);
+
 
                     // 4. تسليم الصوت لـ Agora
                     localCustomTrack = AgoraRTC.createCustomAudioTrack({
