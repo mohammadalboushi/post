@@ -1063,15 +1063,22 @@
     <div id="mediaSelectorModal" class="mixer-modal">
         <div class="mixer-box">
             <h3><span><i class="fas fa-music"></i> مشاركة محتوى للزوار</span> <button class="close-mixer" onclick="document.getElementById('mediaSelectorModal').style.display='none'">×</button></h3>
+            
+            <div class="field" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
+                <label class="field-label" style="color: #ef4444;"><i class="fab fa-youtube"></i> تشغيل من يوتيوب</label>
+                <input type="text" id="ytLinkInput" placeholder="ضع رابط يوتيوب هنا..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink);">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="startSharedMedia('youtube', 'video')" style="flex:1; justify-content:center;"><i class="fas fa-video"></i> كفيديو</button>
+                    <button class="btn btn-danger-soft" onclick="startSharedMedia('youtube', 'audio')" style="flex:1; justify-content:center;"><i class="fas fa-headphones"></i> كصوت</button>
+                </div>
+            </div>
+
             <div class="field">
-                <label class="field-label">رابط يوتيوب</label>
-                <input type="text" id="ytLinkInput" placeholder="ضع رابط يوتيوب هنا..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink);">
+                <label class="field-label" style="color: var(--accent);"><i class="fas fa-file-audio"></i> تشغيل ملف صوتي من جهازك (Smule وغيره)</label>
+                <input type="file" id="localAudioInput" accept="audio/*" style="width: 100%; padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); margin-bottom: 10px;">
+                <audio id="localAudioPlayer" controls style="display:none; width: 100%; outline: none; border-radius: 5px;"></audio>
+                <p style="font-size: 0.7rem; color: var(--ink-faint); margin-top: 5px; text-align: center;">سيتم بث الصوت مباشرة ليتداخل مع صوتك 🎙️</p>
             </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button class="btn btn-primary" onclick="startSharedMedia('youtube', 'video')" style="flex:1; justify-content:center;"><i class="fas fa-video"></i> تشغيل كفيديو</button>
-                <button class="btn btn-danger-soft" onclick="startSharedMedia('youtube', 'audio')" style="flex:1; justify-content:center;"><i class="fas fa-headphones"></i> تشغيل كصوت</button>
-            </div>
-            <p style="font-size: 0.7rem; color: var(--ink-faint); text-align: center;">سيعمل المحتوى عندك وعند الزوار بالتزامن مع إمكانية التقديم والتأخير.</p>
         </div>
     </div>
 
@@ -1088,6 +1095,10 @@
             <div class="slider-group">
                 <label><span>قوة صوتي (Mic)</span><span id="myVolVal">100%</span></label>
                 <input type="range" id="myVolSlider" min="0" max="150" value="100">
+            </div>
+            <div class="slider-group">
+                <label><span>حجم صوت الأغاني / الميديا</span><span id="mediaVolVal">50%</span></label>
+                <input type="range" id="mediaVolSlider" min="0" max="100" value="50">
             </div>
             <div class="slider-group">
                 <label><span>عزل الضجيج (Noise Gate)</span><span id="noiseVal">0%</span></label>
@@ -1809,6 +1820,15 @@
                     liveMasterGain.connect(liveMonitorGain);
                     liveMonitorGain.connect(liveAudioCtx.destination);
 
+                    // إضافة مشغل الملفات الصوتية المحلية لخط البث
+                    const localPlayer = document.getElementById('localAudioPlayer');
+                    if (!localPlayer.sourceNodeCreated) {
+                        const localAudioSource = liveAudioCtx.createMediaElementSource(localPlayer);
+                        localAudioSource.connect(liveDest); // بيبعت الأغنية للزوار
+                        localAudioSource.connect(liveMonitorGain); // بيبعت الأغنية لسماعتك لتسمعها معهم
+                        localPlayer.sourceNodeCreated = true;
+                    }
+
 
                     // 4. تسليم الصوت لـ Agora
                     localCustomTrack = AgoraRTC.createCustomAudioTrack({
@@ -1945,6 +1965,25 @@
                 const val = e.target.value;
                 document.getElementById('myVolVal').innerText = val + '%';
                 if(liveMasterGain) liveMasterGain.gain.value = val / 100;
+            };
+        }
+
+        if(document.getElementById('mediaVolSlider')) {
+            document.getElementById('mediaVolSlider').oninput = (e) => {
+                const val = parseInt(e.target.value);
+                document.getElementById('mediaVolVal').innerText = val + '%';
+                
+                // 1. التحكم بملف الصوت المرفوع من جوالك
+                const localPlayer = document.getElementById('localAudioPlayer');
+                if(localPlayer) localPlayer.volume = val / 100;
+                
+                // 2. التحكم باليوتيوب عندك كمدير
+                if(ytPlayerAdmin && ytPlayerAdmin.setVolume) ytPlayerAdmin.setVolume(val);
+                
+                // 3. إرسال حجم الصوت لقاعدة البيانات مشان يوطى عند الزوار تلقائياً
+                if(isLive) {
+                    update(ref(db, 'liveData/media'), { volume: val });
+                }
             };
         }
 
@@ -2166,8 +2205,11 @@
                 ytPlayerAdmin.loadVideoById(url);
             }
 
-            // رفع حالة الميديا لقاعدة البيانات ليلقطوها الزوار
-            set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, ts: Date.now() });
+            const currentVol = parseInt(document.getElementById('mediaVolSlider').value || 50);
+            if(ytPlayerAdmin && ytPlayerAdmin.setVolume) ytPlayerAdmin.setVolume(currentVol);
+
+            // رفع حالة الميديا لقاعدة البيانات ليلقطوها الزوار مع حجم الصوت الحالي
+            set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, volume: currentVol, ts: Date.now() });
             
             // مزامنة مستمرة للوقت مشان ما يفصلوا الزوار
             syncInterval = setInterval(() => {
@@ -2182,6 +2224,19 @@
             if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) ytPlayerAdmin.stopVideo();
             clearInterval(syncInterval);
             remove(ref(db, 'liveData/media')); 
+        };
+
+        // تشغيل الملفات الصوتية المحلية من الجهاز
+        document.getElementById('localAudioInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const player = document.getElementById('localAudioPlayer');
+                player.src = URL.createObjectURL(file);
+                player.style.display = 'block';
+                if(!isLive) {
+                    showToast("تنبيه: لتسمع الأغنية مع الزوار، ابدأ البث أولاً!", "error");
+                }
+            }
         };
 
 </script>

@@ -923,6 +923,11 @@
                 player.loadVideoById(data.url, data.time);
             }
 
+            // تطبيق حجم الصوت المرسل من مكسر المدير فوراً
+            if(data.volume !== undefined && player.setVolume) {
+                player.setVolume(data.volume);
+            }
+
             if (data.state === 'playing') {
                 player.playVideo();
                 // المزامنة إذا كان الفارق أكثر من ثانيتين ونصف

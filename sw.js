@@ -1,4 +1,4 @@
-const CACHE_NAME = 'admin-cache-v56';
+const CACHE_NAME = 'admin-cache-v57';
 
 const urlsToCache = [
   './admin.html',
