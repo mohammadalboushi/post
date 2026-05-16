@@ -1730,8 +1730,10 @@
                     });
                     liveSourceNode = liveAudioCtx.createMediaStreamSource(liveMicStream);
 
-                    /                    // 2. إنشاء الفلاتر (بوابة الضجيج الاحترافية) للمدير
+                    // 2. إنشاء الفلاتر (بوابة الضجيج الاحترافية) للمدير
                     let adminAnalyser = liveAudioCtx.createAnalyser();
+                    adminAnalyser.fftSize = 256;
+                    liveSourceNode.connect(adminAnalyser);
                     adminAnalyser.fftSize = 256;
                     liveSourceNode.connect(adminAnalyser);
 
