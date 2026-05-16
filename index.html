@@ -696,6 +696,7 @@
 
             allFetchedPosts = Object.entries(data)
                 .map(([k, v]) => ({ id: k, ...v }))
+                .filter(p => !p.isHidden) // إخفاء المنشورات اللي حالتها مخفية
                 .sort((a, b) => {
                     if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1;
                     return (a.order || 0) - (b.order || 0);

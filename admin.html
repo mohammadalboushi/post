@@ -501,6 +501,10 @@
         }
 
         .post-item:hover .post-item-actions { opacity: 1; }
+        .post-item.hidden-post { background: rgba(255, 77, 77, 0.05); border: 1px solid rgba(255, 77, 77, 0.3); }
+        .post-checkbox { margin-left: 10px; transform: scale(1.2); cursor: pointer; accent-color: var(--accent); }
+        .bulk-actions { display: none; align-items: center; padding: 10px 12px; background: var(--surface-2); border-radius: var(--radius-sm); margin-bottom: 10px; gap: 10px; animation: fade-up 0.2s ease; }
+        .bulk-actions.active { display: flex; }
 
         .icon-btn {
             width: 30px;
@@ -908,9 +912,15 @@
                 <div class="list-pane">
                     <div class="list-pane-header">
                         <div class="list-pane-title">المنشورات المنشورة</div>
-                        <div class="search-input-wrap">
+                        <div class="search-input-wrap" style="margin-bottom: 12px;">
                             <i class="fas fa-search"></i>
                             <input type="text" class="search-input" id="searchInput" placeholder="بحث في المنشورات...">
+                        </div>
+                        <div class="bulk-actions" id="bulkActions">
+                            <input type="checkbox" id="selectAllCb" title="تحديد الكل">
+                            <span style="font-size: 0.8rem; color: var(--ink-muted); margin-left: auto;">تحديد الكل</span>
+                            <button class="btn btn-ghost" id="bulkHideBtn" style="padding: 6px 12px; font-size: 0.75rem;"><i class="fas fa-eye-slash"></i> إخفاء/إظهار</button>
+                            <button class="btn btn-danger-soft" id="bulkDeleteBtn" style="padding: 6px 12px; font-size: 0.75rem;"><i class="fas fa-trash"></i> حذف</button>
                         </div>
                     </div>
                     <div class="list-scroll">
@@ -1074,31 +1084,38 @@
             });
         }
 
-        function renderList(posts) {
+                function renderList(posts) {
             const list = document.getElementById('postsList');
             list.innerHTML = '';
 
             if (!posts.length) {
                 list.innerHTML = `<div class="list-empty"><i class="fas fa-inbox" style="font-size:1.5rem; display:block; margin-bottom:12px; opacity:0.3;"></i>لا توجد منشورات</div>`;
+                document.getElementById('bulkActions').classList.remove('active');
                 return;
             }
+
+            document.getElementById('bulkActions').classList.add('active');
 
             posts.forEach(post => {
                 const dateStr = new Date(post.timestamp).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
                 const div = document.createElement('div');
-                div.className = `post-item${editingPostId === post.id ? ' editing' : ''}`;
+                div.className = `post-item ${editingPostId === post.id ? 'editing' : ''} ${post.isHidden ? 'hidden-post' : ''}`;
                 div.setAttribute('data-id', post.id);
 
                 div.innerHTML = `
-                    <i class="fas fa-exchange-alt drag-handle" onclick="handleSwapClick('${post.id}')" style="cursor:pointer;" title="تبديل"></i>
+                    <input type="checkbox" class="post-checkbox" value="${post.id}">
+                    <i class="fas fa-exchange-alt drag-handle" onclick="handleSwapClick('${post.id}')" style="cursor:pointer; margin-right:8px;" title="تبديل"></i>
                     <div class="post-item-info">
-                        <div class="post-item-title">${post.title || '(بدون عنوان)'}</div>
+                        <div class="post-item-title">${post.title || '(بدون عنوان)'} ${post.isHidden ? '<span style="color:var(--danger); font-size:0.7rem;">(مخفي)</span>' : ''}</div>
                         <div class="post-item-meta">
                             ${post.isPinned ? `<div class="pin-indicator"></div>` : ''}
                             <span class="post-item-date">${dateStr}</span>
                         </div>
                     </div>
                     <div class="post-item-actions">
+                        <button class="icon-btn icon-btn-ghost" onclick="toggleHide('${post.id}', ${post.isHidden})" title="${post.isHidden ? 'إظهار' : 'إخفاء'}">
+                            <i class="fas ${post.isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                        </button>
                         <button class="icon-btn icon-btn-pin ${post.isPinned ? 'pinned' : ''}" onclick="togglePin('${post.id}', ${post.isPinned})" title="${post.isPinned ? 'إلغاء التثبيت' : 'تثبيت'}">
                             <i class="fas fa-thumbtack"></i>
                         </button>
@@ -1114,9 +1131,42 @@
             });
         }
 
+        // --- دوال الإخفاء والتحديد ---
+        window.toggleHide = (id, currentStatus) => {
+            update(ref(db, `posts/${id}`), { isHidden: !currentStatus });
+            showToast(currentStatus ? "تم إظهار المنشور للزوار" : "تم إخفاء المنشور");
+        };
+
+        document.getElementById('selectAllCb').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.post-checkbox').forEach(cb => cb.checked = isChecked);
+        });
+
+        document.getElementById('bulkDeleteBtn').onclick = () => {
+            const selected = Array.from(document.querySelectorAll('.post-checkbox:checked')).map(cb => cb.value);
+            if(selected.length === 0) return showToast("حدد منشورات أولاً!", "error");
+            if(confirm(`هل أنت متأكد من حذف ${selected.length} منشورات نهائياً؟`)) {
+                selected.forEach(id => remove(ref(db, `posts/${id}`)));
+                showToast("تم الحذف بنجاح");
+                document.getElementById('selectAllCb').checked = false;
+            }
+        };
+
+        document.getElementById('bulkHideBtn').onclick = () => {
+            const selected = Array.from(document.querySelectorAll('.post-checkbox:checked')).map(cb => cb.value);
+            if(selected.length === 0) return showToast("حدد منشورات أولاً!", "error");
+            selected.forEach(id => {
+                const post = allPostsArray.find(p => p.id === id);
+                if(post) update(ref(db, `posts/${id}`), { isHidden: !post.isHidden });
+            });
+            showToast("تم تغيير حالة الإخفاء");
+            document.getElementById('selectAllCb').checked = false;
+        };
+
+
         // --- دوال الصدى والتسجيل ---
         function generateReverb(ctx) {
-            const length = ctx.sampleRate * 3.0; // محاكاة غرفة 3 ثواني
+            const length = ctx.sampleRate * 1.5; // خففناها لـ 1.5 ثانية لتسريع المعالجة عالموبايل
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
             for (let i = 0; i < length; i++) {
                 const decay = Math.pow(1 - i / length, 4);
