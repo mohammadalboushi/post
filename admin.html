@@ -1287,9 +1287,14 @@
 
         async function applyReverbAndGetBlob(blob, reverbValue) {
             if (reverbValue == 0) return blob;
+            
             const arrayBuffer = await blob.arrayBuffer();
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            const offlineCtx = new OfflineAudioContext(2, audioBuffer.length + (audioBuffer.sampleRate * 3), audioBuffer.sampleRate);
+            
+            // السر هون: خلقنا بيئة معالجة جديدة ومستقلة تماماً مشان ما يعلق المتصفح
+            const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+            
+            const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels || 2, audioBuffer.length + (audioBuffer.sampleRate * 1.5), audioBuffer.sampleRate);
             
             const source = offlineCtx.createBufferSource();
             source.buffer = audioBuffer;
@@ -1313,6 +1318,10 @@
 
             source.start();
             const renderedBuffer = await offlineCtx.startRendering();
+            
+            // إغلاق البيئة المؤقتة لتنظيف الذاكرة
+            if(tempCtx.state !== 'closed') tempCtx.close();
+            
             return bufferToWave(renderedBuffer, renderedBuffer.length);
         }
 
