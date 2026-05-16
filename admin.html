@@ -875,7 +875,16 @@
                             <button type="button" id="stopRecordBtn" class="btn btn-danger-soft" style="display:none; flex: 1;"><i class="fas fa-stop"></i> إيقاف التسجيل</button>
                         </div>
                         
-                        <audio id="audioPreview" controls style="display:none; width: 100%; margin-top: 12px; height: 40px;"></audio>
+                        <audio id="audioPreview" controls style="display:none; width: 100%; margin-top: 12px; height: 40px; outline: none;"></audio>
+                        
+                        <div id="reverbControl" style="display:none; margin-top: 15px; background: var(--surface-3); padding: 12px; border-radius: var(--radius-sm);">
+                            <label class="field-label" style="display: flex; justify-content: space-between;">
+                                <span>مستوى الصدى (Reverb)</span>
+                                <span id="reverbValueTxt" style="color: var(--accent);">0%</span>
+                            </label>
+                            <input type="range" id="reverbSlider" min="0" max="100" value="0" style="width: 100%; accent-color: var(--accent);">
+                        </div>
+
                         <input type="hidden" id="postAudioUrl">
                     </div>
 
@@ -957,14 +966,18 @@
         let editingPostId = null;
         let postToDelete = null;
         let swapSourceKey = null;
-        let sortableInstance = null;
         let allPostsArray = [];
 
+        // متغيرات التسجيل والصدى
         let mediaRecorder;
         let audioChunks = [];
         let recordedAudioBlob = null;
+        let audioCtx = null;
+        let mediaElementSource = null;
+        let wetGainNode = null;
+        let dryGainNode = null;
+        let convolverNode = null;
 
-        // Toast
         window.showToast = (msg, type = "success") => {
             const toast = document.getElementById("toast");
             document.getElementById("toastMsg").innerText = msg;
@@ -974,7 +987,6 @@
             setTimeout(() => toast.classList.remove("show"), 3000);
         };
 
-        // Char counter
         document.getElementById('postContent').addEventListener('input', function() {
             const len = this.value.length;
             const counter = document.getElementById('charCounter');
@@ -982,12 +994,10 @@
             counter.className = 'char-counter' + (len > 2000 ? ' warn' : '');
         });
 
-        // Auth state
         onAuthStateChanged(auth, (user) => {
             if (user && user.uid === myUID) {
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('app-shell').style.display = 'grid';
-                // Update user info in sidebar
                 document.getElementById('userName').textContent = user.displayName || 'المدير';
                 const initial = (user.displayName || 'A')[0];
                 document.getElementById('userAvatar').textContent = initial;
@@ -1002,7 +1012,6 @@
         document.getElementById('logoutBtn').onclick = () => signOut(auth);
         document.getElementById('logoutTopBtn').onclick = () => signOut(auth);
 
-        // Search
         document.getElementById('searchInput').addEventListener('input', function() {
             const q = this.value.trim().toLowerCase();
             renderList(q ? allPostsArray.filter(p =>
@@ -1010,7 +1019,7 @@
             ) : allPostsArray);
         });
 
-                window.handleSwapClick = (id) => {
+        window.handleSwapClick = (id) => {
             if (!swapSourceKey) {
                 swapSourceKey = id;
                 document.querySelector(`.post-item[data-id="${id}"]`).style.border = '2px dashed #6c6cff';
@@ -1021,18 +1030,14 @@
                     loadPosts(); 
                     return;
                 }
-                
-                // جلب أماكن المنشورين بالقائمة الحالية
                 const index1 = allPostsArray.findIndex(p => p.id === swapSourceKey);
                 const index2 = allPostsArray.findIndex(p => p.id === id);
 
                 if (index1 !== -1 && index2 !== -1) {
-                    // تبديل الأماكن فعلياً بقلب المصفوفة
                     const temp = allPostsArray[index1];
                     allPostsArray[index1] = allPostsArray[index2];
                     allPostsArray[index2] = temp;
 
-                    // إعادة ترقيم كل المنشورات لضمان الترتيب 100%
                     const updates = {};
                     allPostsArray.forEach((post, i) => {
                         updates[`posts/${post.id}/order`] = i;
@@ -1049,7 +1054,6 @@
             }
         };
 
-
         function loadPosts() {
             onValue(ref(db, 'posts'), (snapshot) => {
                 allPosts = snapshot.val() || {};
@@ -1060,11 +1064,9 @@
                         return (a.order || 0) - (b.order || 0);
                     });
 
-                // Stats
                 document.getElementById('statTotal').textContent = allPostsArray.length;
                 document.getElementById('statPinned').textContent = allPostsArray.filter(p => p.isPinned).length;
 
-                // Render
                 const q = document.getElementById('searchInput').value.trim().toLowerCase();
                 renderList(q ? allPostsArray.filter(p =>
                     (p.title || '').toLowerCase().includes(q) || p.content.toLowerCase().includes(q)
@@ -1110,68 +1112,68 @@
                 `;
                 list.appendChild(div);
             });
-            
         }
 
-                // برمجة زر التسجيل (صدى Reverb احترافي بناءً على الإعدادات المطلوبة)
-        document.getElementById('startRecordBtn').onclick = async () => {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const audioDevs = devices.filter(d => d.kind === 'audioinput');
-                // محاولة إجبار المتصفح ياخد المايك الأساسي للجوال
-                const builtIn = audioDevs.find(d => d.label.toLowerCase().includes('built-in') || d.label.toLowerCase().includes('internal') || d.label.toLowerCase().includes('primary'));
+        // --- دوال الصدى والتسجيل ---
+        function generateReverb(ctx) {
+            const length = ctx.sampleRate * 3.0; // محاكاة غرفة 3 ثواني
+            const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+            for (let i = 0; i < length; i++) {
+                const decay = Math.pow(1 - i / length, 4);
+                impulse.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay;
+                impulse.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay;
+            }
+            return impulse;
+        }
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioEl = document.getElementById('audioPreview');
+                mediaElementSource = audioCtx.createMediaElementSource(audioEl);
                 
-                // طلب التسجيل بدون إضافات المتصفح اللي بتخنق الصوت
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: builtIn ? { deviceId: { exact: builtIn.deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-                });
+                dryGainNode = audioCtx.createGain();
+                wetGainNode = audioCtx.createGain();
+                wetGainNode.gain.value = 0;
 
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioCtx.createMediaStreamSource(stream);
-                const destination = audioCtx.createMediaStreamDestination();
-
-                // 1. توليد تأثير الغرفة (Room Size: 100%)
-                const reverbTime = 3.0; // محاكاة غرفة كبيرة (3 ثواني)
-                const sampleRate = audioCtx.sampleRate;
-                const length = sampleRate * reverbTime;
-                const impulse = audioCtx.createBuffer(2, length, sampleRate);
-                for (let i = 0; i < length; i++) {
-                    const decay = Math.pow(1 - i / length, 4); // المضائلة العالية
-                    impulse.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay;
-                    impulse.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay;
-                }
-                const convolver = audioCtx.createConvolver();
-                convolver.buffer = impulse;
-
-                // 2. قبل التأخير (Pre-delay: 300ms)
-                const preDelay = audioCtx.createDelay();
-                preDelay.delayTime.value = 0.300; // 300 مللي ثانية بالضبط
-
-                // 3. قطع منخفض التردد (Low Cut Filter: 743 Hz)
+                convolverNode = audioCtx.createConvolver();
+                convolverNode.buffer = generateReverb(audioCtx);
+                
                 const lowCut = audioCtx.createBiquadFilter();
                 lowCut.type = "highpass";
                 lowCut.frequency.value = 743;
-
-                // 4. دمج الصوت الأصلي مع الصدى
-                const dryGain = audioCtx.createGain(); // قوة الصوت الأساسي
-                dryGain.gain.value = 1.0;
                 
-                const wetGain = audioCtx.createGain(); // قوة الصدى
-                wetGain.gain.value = 0.55; 
+                const preDelay = audioCtx.createDelay();
+                preDelay.delayTime.value = 0.3;
 
-                // التوصيلات الصوتية للمسارين:
-                // أ- مسار الصوت النظيف
-                source.connect(dryGain);
-                dryGain.connect(destination);
+                mediaElementSource.connect(dryGainNode);
+                dryGainNode.connect(audioCtx.destination);
 
-                // ب- مسار الصدى (تأخير 300ms -> فلتر 743Hz -> تأثير الغرفة -> دمج)
-                source.connect(preDelay);
+                mediaElementSource.connect(preDelay);
                 preDelay.connect(lowCut);
-                lowCut.connect(convolver);
-                convolver.connect(wetGain);
-                wetGain.connect(destination);
+                lowCut.connect(convolverNode);
+                convolverNode.connect(wetGainNode);
+                wetGainNode.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
 
-                mediaRecorder = new MediaRecorder(destination.stream);
+        document.getElementById('reverbSlider').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('reverbValueTxt').innerText = val + '%';
+            if(wetGainNode) wetGainNode.gain.value = val / 100;
+        });
+
+        document.getElementById('startRecordBtn').onclick = async () => {
+            try {
+                initAudioContext();
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioDevs = devices.filter(d => d.kind === 'audioinput');
+                const builtIn = audioDevs.find(d => d.label.toLowerCase().includes('built-in') || d.label.toLowerCase().includes('internal') || d.label.toLowerCase().includes('primary'));
+                
+                // رجعنا العزل ليكون الصوت صافي متل ما طلبت
+                const stream = await navigator.mediaDevices.getUserMedia(builtIn ? { audio: { deviceId: { exact: builtIn.deviceId } } } : { audio: true });
+                mediaRecorder = new MediaRecorder(stream);
                 mediaRecorder.start();
                 audioChunks = [];
 
@@ -1180,8 +1182,13 @@
                     recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     document.getElementById('audioPreview').src = URL.createObjectURL(recordedAudioBlob);
                     document.getElementById('audioPreview').style.display = 'block';
+                    
+                    document.getElementById('reverbControl').style.display = 'block';
+                    document.getElementById('reverbSlider').value = 0;
+                    document.getElementById('reverbValueTxt').innerText = '0%';
+                    if(wetGainNode) wetGainNode.gain.value = 0;
+
                     stream.getTracks().forEach(track => track.stop());
-                    audioCtx.close();
                 };
 
                 document.getElementById('startRecordBtn').style.display = 'none';
@@ -1192,7 +1199,6 @@
             }
         };
 
-
         document.getElementById('stopRecordBtn').onclick = () => {
             if(mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
@@ -1200,6 +1206,66 @@
                 document.getElementById('stopRecordBtn').style.display = 'none';
             }
         };
+
+        // دالة تحويل الصوت لمعالجته مع الصدى
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+            length = len * numOfChan * 2 + 44,
+            buffer = new ArrayBuffer(length),
+            view = new DataView(buffer),
+            channels = [], i, sample, offset = 0, pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
+            setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
+            setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
+
+            for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+
+            while(pos < length) {
+                for(i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+                    view.setInt16(pos, sample, true);
+                }
+                offset++
+            }
+            return new Blob([buffer], {type: "audio/wav"});
+        }
+
+        async function applyReverbAndGetBlob(blob, reverbValue) {
+            if (reverbValue == 0) return blob;
+            const arrayBuffer = await blob.arrayBuffer();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            const offlineCtx = new OfflineAudioContext(2, audioBuffer.length + (audioBuffer.sampleRate * 3), audioBuffer.sampleRate);
+            
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            
+            const dry = offlineCtx.createGain();
+            const wet = offlineCtx.createGain();
+            wet.gain.value = reverbValue / 100;
+
+            const conv = offlineCtx.createConvolver();
+            conv.buffer = generateReverb(offlineCtx);
+
+            const lowCut = offlineCtx.createBiquadFilter();
+            lowCut.type = "highpass"; lowCut.frequency.value = 743;
+
+            const preDelay = offlineCtx.createDelay();
+            preDelay.delayTime.value = 0.3;
+
+            source.connect(dry); dry.connect(offlineCtx.destination);
+            source.connect(preDelay); preDelay.connect(lowCut);
+            lowCut.connect(conv); conv.connect(wet); wet.connect(offlineCtx.destination);
+
+            source.start();
+            const renderedBuffer = await offlineCtx.startRendering();
+            return bufferToWave(renderedBuffer, renderedBuffer.length);
+        }
 
         document.getElementById('publishBtn').onclick = async () => {
             const title = document.getElementById('postTitle').value.trim();
@@ -1216,7 +1282,6 @@
             btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري الرفع والنشر...`;
 
             try {
-                // رفع الصورة على ImgBB
                 if (fileInput.files.length > 0) {
                     const formData = new FormData();
                     formData.append("image", fileInput.files[0]);
@@ -1227,9 +1292,16 @@
                     if (dataImage.success) imageUrl = dataImage.data.url; 
                 }
 
-                // رفع الصوت على Cloudinary
                 let audioToUpload = audioInput.files.length > 0 ? audioInput.files[0] : recordedAudioBlob;
+                const reverbVal = document.getElementById('reverbSlider').value;
+
                 if (audioToUpload) {
+                    if (!audioInput.files.length && reverbVal > 0) {
+                        btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري دمج الصدى...`;
+                        audioToUpload = await applyReverbAndGetBlob(audioToUpload, reverbVal);
+                    }
+                    
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري الرفع...`;
                     const audioData = new FormData();
                     audioData.append("file", audioToUpload);
                     audioData.append("upload_preset", "malaboushi_preset"); 
@@ -1274,7 +1346,6 @@
             document.getElementById('cancelEditBtn').style.display = 'inline-flex';
             document.getElementById('editBanner').classList.add('visible');
             document.querySelector('.editor-pane').scrollTo({ top: 0, behavior: 'smooth' });
-            // highlight in list
             document.querySelectorAll('.post-item').forEach(el => {
                 el.classList.toggle('editing', el.getAttribute('data-id') === id);
             });
@@ -1289,9 +1360,14 @@
             document.getElementById('postImageFile').value = '';
             document.getElementById('postAudioUrl').value = '';
             document.getElementById('postAudioFile').value = '';
+            
             document.getElementById('audioPreview').style.display = 'none';
             document.getElementById('audioPreview').src = '';
+            document.getElementById('reverbControl').style.display = 'none';
+            document.getElementById('reverbSlider').value = 0;
+            if(wetGainNode) wetGainNode.gain.value = 0;
             recordedAudioBlob = null;
+
             document.getElementById('postContent').value = '';
             document.getElementById('charCounter').textContent = '0 حرف';
             document.getElementById('publishBtn').innerHTML = `<i class="fas fa-paper-plane"></i> نشر`;
@@ -1332,12 +1408,10 @@
 
 <script>
 if ('serviceWorker' in navigator) {
-  // التعديل هنا: إضافة نقطة قبل الشرطة
   navigator.serviceWorker.register('./sw.js') 
     .then(() => console.log('Service Worker Registered'))
     .catch((err) => console.log('Service Worker Failed', err));
 }
-// كود التقاط حدث التثبيت وإظهار الزر
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); 
@@ -1346,7 +1420,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     if(installBtn) installBtn.style.display = 'inline-flex'; 
 });
 
-// تشغيل رسالة التثبيت لما نكبس على الزر
 const installBtn = document.getElementById('installAppBtn');
 if(installBtn) {
     installBtn.addEventListener('click', async () => {
