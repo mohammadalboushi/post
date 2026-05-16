@@ -605,9 +605,8 @@
     <div id="toast"><span class="toast-dot"></span> <span id="toast-msg"></span></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // ضفتلك دوال الإرسال (push, set, update, remove) مشان الدردشة والطلبات تشتغل
-        import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        // ضفتلك دوال الإرسال و onDisconnect مشان الدردشة والعداد يشتغلوا
+        import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBB_U4C880PW4GxZd8FALv8yBSiP2mNeBY",
@@ -972,7 +971,7 @@
                             </div>
                         </div>
                         ${cleanTitle ? `<div class="post-title">${cleanTitle}</div>` : ''}
-                        ${post.audioUrl ? `<audio controls src="${escapeHTML(post.audioUrl)}" style="width: 100%; margin-bottom: 16px; border-radius: 8px; outline: none;"></audio>` : ''}
+                        ${post.audioUrl ? `<audio controls src="${escapeHTML(post.audioUrl)}" onplay="incrementPlayCount('${post.id}', event)" style="width: 100%; margin-bottom: 16px; border-radius: 8px; outline: none;"></audio>` : ''}
                         ${contentHTML}
                     </div>
                     <div class="card-footer">
@@ -1012,38 +1011,79 @@
             }
         });
 
-        // 2. زر الاستماع (الاتصال بـ Agora)
+        // 2. زر الاستماع (الاتصال بـ Agora) وطلب الاسم
         window.joinBroadcast = async () => {
+            if (!visitorName) {
+                // نافذة إدخال اسم أنيقة
+                const namePrompt = document.createElement('div');
+                namePrompt.innerHTML = `
+                    <div style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+                        <div style="background:var(--surface); padding:30px; border-radius:20px; width:90%; max-width:350px; text-align:center; border:1px solid var(--accent);">
+                            <h3 style="margin-bottom:15px; color:var(--ink);">مين معنا؟ 🎧</h3>
+                            <input type="text" id="tempNameInput" class="custom-input" placeholder="اكتب اسمك للإنضمام..." style="margin-bottom:15px; text-align:center;">
+                            <div style="display:flex; gap:10px;">
+                                <button id="confirmNameBtn" class="btn-live" style="flex:1; justify-content:center;">دخول</button>
+                                <button id="cancelNameBtn" class="btn-interact" style="flex:1; justify-content:center;">إلغاء</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(namePrompt);
+
+                document.getElementById('cancelNameBtn').onclick = () => namePrompt.remove();
+                document.getElementById('confirmNameBtn').onclick = () => {
+                    const n = document.getElementById('tempNameInput').value.trim();
+                    if(n) {
+                        visitorName = n;
+                        localStorage.setItem('visitorName', visitorName);
+                        namePrompt.remove();
+                        executeJoin();
+                    } else {
+                        showToast("اكتب اسمك يا غالي!");
+                    }
+                };
+            } else {
+                executeJoin();
+            }
+        };
+
+        async function executeJoin() {
             try {
                 if(!rtcClient) {
                     rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-                    
-                    // استقبال الصوت من المدير
                     rtcClient.on("user-published", async (user, mediaType) => {
                         await rtcClient.subscribe(user, mediaType);
-                        if (mediaType === "audio") {
-                            user.audioTrack.play(); // تشغيل الصوت فوراً
-                        }
+                        if (mediaType === "audio") user.audioTrack.play();
                     });
                 }
                 
                 await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, visitorId);
                 isListening = true;
-                showToast("أنت الآن تستمع للبث المباشر 🎧");
                 
+                // 1. تسجيل المستمع بقاعدة البيانات ليزيد العداد عندك
+                const viewerRef = ref(db, 'liveData/viewers/' + visitorId);
+                set(viewerRef, { name: visitorName, joinedAt: Date.now() });
+                onDisconnect(viewerRef).remove(); // إذا سكر الصفحة بينحذف فوراً من العداد
+
+                // 2. إرسال رسالة ترحيب آلية بالدردشة
+                push(ref(db, 'liveData/chat'), {
+                    senderId: 'system',
+                    name: 'النظام',
+                    text: `👋 انضم ${visitorName} للاستماع!`,
+                    timestamp: Date.now()
+                });
+
+                showToast("أنت الآن تستمع للبث المباشر 🎧");
                 document.getElementById('liveActionsNotListening').style.display = 'none';
                 document.getElementById('liveActionsListening').style.display = 'flex';
             } catch (err) {
                 console.error("خطأ بالانضمام:", err);
                 showToast("حدث خطأ أثناء محاولة الاستماع.");
             }
-        };
+        }
 
         window.leaveBroadcast = () => {
-            if(localMicTrack) {
-                localMicTrack.close();
-                localMicTrack = null;
-            }
+            if(localMicTrack) { localMicTrack.close(); localMicTrack = null; }
             if(rtcClient) { rtcClient.leave(); }
             isListening = false;
             
@@ -1051,8 +1091,8 @@
             document.getElementById('liveActionsListening').style.display = 'none';
             closeLiveInteraction();
             
-            // سحب طلب الصعود إذا كان موجود
             remove(ref(db, `liveData/requests/${visitorId}`));
+            remove(ref(db, `liveData/viewers/${visitorId}`)); // إزالة من العداد
         };
 
         // 3. التفاعل (نوافذ الدردشة والطلبات)
@@ -1174,6 +1214,14 @@
                 }, 3000);
             }
         });
+
+        window.incrementPlayCount = (id, event) => {
+            const post = window.allPostsArray.find(p => p.id === id);
+            if(post) {
+                update(ref(db, `posts/${id}`), { playCount: (post.playCount || 0) + 1 });
+                event.target.removeAttribute('onplay'); // لضمان احتساب التشغيلة مرة واحدة
+            }
+        };
 
     </script>
 </body>

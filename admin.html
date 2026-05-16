@@ -993,6 +993,7 @@
             <div class="studio-status">
                 <div class="live-dot" id="liveIndicator"></div>
                 <div class="live-timer" id="liveTimer">00:00</div>
+<div style="color: var(--accent); font-weight: bold; margin-right: 15px; font-size: 0.9rem;"><i class="fas fa-eye"></i> <span id="viewersCount">0</span> مستمع</div>
                 <span id="liveStatusText" style="font-weight: 700; color: var(--ink-muted);">جاهز للبث</span>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -1236,6 +1237,7 @@
                         <div class="post-item-meta">
                             ${post.isPinned ? `<div class="pin-indicator"></div>` : ''}
                             <span class="post-item-date">${dateStr}</span>
+                            ${post.audioUrl ? `<span style="color: var(--accent); font-size: 0.75rem; font-weight: 900; margin-right: 12px;"><i class="fas fa-play"></i> ${post.playCount || 0}</span>` : ''}
                         </div>
                     </div>
                     <div class="post-item-actions">
@@ -1846,6 +1848,155 @@
             }
             draw();
         }
+        
+                // ==========================================
+        // دوال الدردشة والطلبات وصوت الضيف (لوحة الأدمن)
+        // ==========================================
+        
+        // 1. إرسال رسالة من الأدمن
+        window.sendAdminChat = () => {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if(!msg) return;
+            push(ref(db, 'liveData/chat'), {
+                senderId: 'admin',
+                name: 'المدير (أبو فايز)',
+                text: msg,
+                timestamp: Date.now()
+            });
+            input.value = '';
+        };
+
+        // ربط زر الإرسال باللوحة
+        setTimeout(() => {
+            const chatBtn = document.querySelector('.chat-input-area .btn-primary');
+            if(chatBtn) chatBtn.onclick = window.sendAdminChat;
+        }, 1000);
+
+        // 2. استلام الدردشة وعرضها
+        onValue(ref(db, 'liveData/chat'), (snap) => {
+            const data = snap.val();
+            const chatArea = document.getElementById('chatArea');
+            if(!chatArea) return;
+            chatArea.innerHTML = '';
+            if(data) {
+                Object.values(data).sort((a,b) => a.timestamp - b.timestamp).forEach(msg => {
+                    const isAdmin = msg.senderId === 'admin';
+                    chatArea.innerHTML += `
+                        <div class="chat-msg" style="background: ${isAdmin ? 'var(--accent-glow)' : 'var(--surface-2)'};">
+                            <span class="name" style="color: ${isAdmin ? 'var(--accent)' : 'var(--ink)'};">${isAdmin ? '👑' : ''} ${msg.name}:</span>
+                            <span>${msg.text}</span>
+                        </div>
+                    `;
+                });
+                chatArea.scrollTop = chatArea.scrollHeight;
+            } else {
+                chatArea.innerHTML = '<div style="text-align: center; color: var(--ink-faint); margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>';
+            }
+        });
+
+        // 3. استلام الطلبات وإدارتها
+        onValue(ref(db, 'liveData/requests'), (snap) => {
+            const data = snap.val();
+            const reqList = document.getElementById('requestsList');
+            const reqBadge = document.getElementById('reqBadge');
+            if(!reqList) return;
+            reqList.innerHTML = '';
+            
+            if(data) {
+                let pendingCount = 0;
+                Object.entries(data).forEach(([uid, req]) => {
+                    if(req.status === 'pending') {
+                        pendingCount++;
+                        reqList.innerHTML += `
+                            <div class="request-item">
+                                <span style="font-size: 0.85rem; font-weight: 700;">${req.name}</span>
+                                <div class="request-actions">
+                                    <button class="btn btn-primary" onclick="acceptGuest('${uid}', '${req.name}')" style="padding: 4px 8px; font-size: 0.7rem;">قبول</button>
+                                    <button class="btn btn-danger-soft" onclick="rejectGuest('${uid}')" style="padding: 4px 8px; font-size: 0.7rem;">رفض</button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (req.status === 'approved') {
+                        document.getElementById('coHostSection').style.opacity = '1';
+                        document.getElementById('coHostSection').style.pointerEvents = 'auto';
+                        document.getElementById('coHostName').innerText = req.name;
+                        const dropBtn = document.querySelector('#coHostSection .btn-danger-soft');
+                        if(dropBtn) dropBtn.onclick = () => removeGuest(uid);
+                    }
+                });
+                
+                if(pendingCount > 0) {
+                    reqBadge.style.display = 'inline-block';
+                    reqBadge.innerText = pendingCount;
+                } else {
+                    reqBadge.style.display = 'none';
+                    reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
+                }
+            } else {
+                reqBadge.style.display = 'none';
+                reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
+                document.getElementById('coHostSection').style.opacity = '0.5';
+                document.getElementById('coHostSection').style.pointerEvents = 'none';
+                document.getElementById('coHostName').innerText = "لا يوجد ضيف حالياً";
+            }
+        });
+
+        // 4. دوال الأزرار للضيوف وربط صوتهم
+        window.acceptGuest = (uid, name) => {
+            update(ref(db, `liveData/requests/${uid}`), { status: 'approved' });
+            showToast("تم قبول " + name);
+            
+            // ربط صوت الضيف بالمكسر تبعك
+            if(rtcClient) {
+                rtcClient.on("user-published", async (user, mediaType) => {
+                    await rtcClient.subscribe(user, mediaType);
+                    if (mediaType === "audio") {
+                        user.audioTrack.play();
+                        
+                        // تفعيل سلايدر التحكم بصوت الضيف
+                        const guestVolSlider = document.getElementById('guestVolSlider');
+                        if(guestVolSlider) {
+                            guestVolSlider.oninput = (e) => {
+                                const val = e.target.value;
+                                document.getElementById('guestVolVal').innerText = val + '%';
+                                user.audioTrack.setVolume(parseInt(val));
+                            };
+                        }
+                        
+                        // تفعيل زر كتم الضيف
+                        const muteBtn = document.querySelector('#coHostSection .btn-ghost');
+                        if(muteBtn) {
+                            let isMuted = false;
+                            muteBtn.onclick = () => {
+                                isMuted = !isMuted;
+                                user.audioTrack.setVolume(isMuted ? 0 : document.getElementById('guestVolSlider').value);
+                                muteBtn.innerHTML = isMuted ? '<i class="fas fa-microphone"></i> إلغاء الكتم' : '<i class="fas fa-microphone-slash"></i> كتم';
+                            };
+                        }
+                    }
+                });
+            }
+        };
+
+        window.rejectGuest = (uid) => {
+            update(ref(db, `liveData/requests/${uid}`), { status: 'rejected' });
+        };
+
+        window.removeGuest = (uid) => {
+            remove(ref(db, `liveData/requests/${uid}`));
+            showToast("تم إنزال الضيف");
+        };
+
+        // استلام عدد المستمعين وعرضهم
+        onValue(ref(db, 'liveData/viewers'), (snap) => {
+            const data = snap.val();
+            const countSpan = document.getElementById('viewersCount');
+            if(countSpan) {
+                countSpan.innerText = data ? Object.keys(data).length : '0';
+            }
+        });
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
