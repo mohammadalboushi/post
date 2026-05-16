@@ -1074,19 +1074,21 @@
             </div>
 
             <div class="field">
-                <label class="field-label" style="color: var(--accent);"><i class="fas fa-file-audio"></i> تشغيل ملف صوتي من جهازك (Smule وغيره)</label>
+                <label class="field-label" style="color: var(--accent);"><i class="fas fa-file-audio"></i> تشغيل ملف صوتي من جهازك</label>
                 <input type="file" id="localAudioInput" accept="audio/*" style="width: 100%; padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); margin-bottom: 10px;">
-                <audio id="localAudioPlayer" controls style="display:none; width: 100%; outline: none; border-radius: 5px;"></audio>
                 <p style="font-size: 0.7rem; color: var(--ink-faint); margin-top: 5px; text-align: center;">سيتم بث الصوت مباشرة ليتداخل مع صوتك 🎙️</p>
             </div>
         </div>
     </div>
 
-    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px;">
-        <div style="position: absolute; top: 5px; left: 10px; z-index: 10;">
+    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 35px;">
+        <div style="position: absolute; top: 5px; right: 10px; z-index: 10; color: #fff; font-size: 0.75rem; font-weight: bold;">المشغل المباشر</div>
+        <div style="position: absolute; top: 5px; left: 10px; z-index: 10; display: flex; gap: 5px;">
+            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="toggleSharedMediaPlay()"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
             <button class="btn btn-danger-soft" style="padding: 4px 10px; font-size: 0.7rem; background: rgba(239,68,68,0.8); color: white;" onclick="stopSharedMedia()"><i class="fas fa-times"></i> إيقاف للكل</button>
         </div>
-        <div id="ytAdminContainer" style="width:100%; height:200px;"></div>
+        <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
+        <audio id="localAudioPlayer" style="display:none; width: 100%; outline: none; border-radius: 0; background: #f0ede8; height: 40px;" controls></audio>
     </div>
 
     <div id="adminMixerModal" class="mixer-modal">
@@ -1820,13 +1822,22 @@
                     liveMasterGain.connect(liveMonitorGain);
                     liveMonitorGain.connect(liveAudioCtx.destination);
 
-                    // إضافة مشغل الملفات الصوتية المحلية لخط البث
+                    // 4. مكسر الأغاني (Media Gain) للتحكم بحجم الملفات الصوتية عند الزوار
+                    if (typeof window.liveMediaGain === 'undefined') {
+                        window.liveMediaGain = liveAudioCtx.createGain();
+                    }
+                    window.liveMediaGain.gain.value = parseInt(document.getElementById('mediaVolSlider').value || 50) / 100;
+                    
+                    window.liveMediaGain.connect(liveDest); // سلك للزوار
+                    window.liveMediaGain.connect(liveMonitorGain); // سلك لسماعتك
+                    
                     const localPlayer = document.getElementById('localAudioPlayer');
                     if (!localPlayer.sourceNodeCreated) {
-                        const localAudioSource = liveAudioCtx.createMediaElementSource(localPlayer);
-                        localAudioSource.connect(liveDest); // بيبعت الأغنية للزوار
-                        localAudioSource.connect(liveMonitorGain); // بيبعت الأغنية لسماعتك لتسمعها معهم
-                        localPlayer.sourceNodeCreated = true;
+                        try {
+                            const localAudioSource = liveAudioCtx.createMediaElementSource(localPlayer);
+                            localAudioSource.connect(window.liveMediaGain);
+                            localPlayer.sourceNodeCreated = true;
+                        } catch(err) {}
                     }
 
 
@@ -1973,14 +1984,17 @@
                 const val = parseInt(e.target.value);
                 document.getElementById('mediaVolVal').innerText = val + '%';
                 
-                // 1. التحكم بملف الصوت المرفوع من جوالك
-                const localPlayer = document.getElementById('localAudioPlayer');
-                if(localPlayer) localPlayer.volume = val / 100;
+                // 1. التحكم بملف الصوت عبر فلتر البث (عشان يتوطى عند الزوار)
+                if (window.liveMediaGain) {
+                    window.liveMediaGain.gain.value = val / 100;
+                }
                 
                 // 2. التحكم باليوتيوب عندك كمدير
-                if(ytPlayerAdmin && ytPlayerAdmin.setVolume) ytPlayerAdmin.setVolume(val);
+                if(typeof ytPlayerAdmin !== 'undefined' && ytPlayerAdmin && ytPlayerAdmin.setVolume) {
+                    try { ytPlayerAdmin.setVolume(val); } catch(err){}
+                }
                 
-                // 3. إرسال حجم الصوت لقاعدة البيانات مشان يوطى عند الزوار تلقائياً
+                // 3. إرسال الحجم لقاعدة البيانات ليتحكم بيوتيوب الزوار
                 if(isLive) {
                     update(ref(db, 'liveData/media'), { volume: val });
                 }
@@ -2221,18 +2235,84 @@
 
         window.stopSharedMedia = () => {
             document.getElementById('adminSharedPlayer').style.display = 'none';
-            if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) ytPlayerAdmin.stopVideo();
+            if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
+                try { ytPlayerAdmin.stopVideo(); } catch(err){}
+            }
+            const localPlayer = document.getElementById('localAudioPlayer');
+            if(localPlayer) {
+                localPlayer.pause();
+                localPlayer.currentTime = 0;
+            }
             clearInterval(syncInterval);
             remove(ref(db, 'liveData/media')); 
         };
 
-        // تشغيل الملفات الصوتية المحلية من الجهاز
+        window.toggleSharedMediaPlay = () => {
+            const localPlayer = document.getElementById('localAudioPlayer');
+            if (localPlayer && localPlayer.style.display === 'block') {
+                if (localPlayer.paused) localPlayer.play();
+                else localPlayer.pause();
+            } else if (ytPlayerAdmin && ytPlayerAdmin.getPlayerState) {
+                const state = ytPlayerAdmin.getPlayerState();
+                if (state === YT.PlayerState.PLAYING) ytPlayerAdmin.pauseVideo();
+                else ytPlayerAdmin.playVideo();
+            }
+        };
+
+        window.startSharedMedia = (type, display) => {
+            if(!isLive) return showToast("يجب بدء البث أولاً!", "error");
+            document.getElementById('mediaSelectorModal').style.display = 'none';
+            
+            const rawUrl = document.getElementById('ytLinkInput').value;
+            const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/);
+            if(!match) return showToast("رابط يوتيوب غير صالح", "error");
+            
+            const url = match[1];
+            document.getElementById('adminSharedPlayer').style.display = 'block';
+            document.getElementById('ytAdminContainer').style.display = 'block';
+            
+            const localPlayer = document.getElementById('localAudioPlayer');
+            if(localPlayer) {
+                localPlayer.style.display = 'none';
+                localPlayer.pause();
+            }
+            
+            if(ytPlayerAdmin && ytPlayerAdmin.loadVideoById) {
+                ytPlayerAdmin.loadVideoById(url);
+            }
+
+            const currentVol = parseInt(document.getElementById('mediaVolSlider').value || 50);
+            if(ytPlayerAdmin && ytPlayerAdmin.setVolume) {
+                try { ytPlayerAdmin.setVolume(currentVol); } catch(err){}
+            }
+
+            set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, volume: currentVol, ts: Date.now() });
+            
+            syncInterval = setInterval(() => {
+                if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState && ytPlayerAdmin.getPlayerState() === YT.PlayerState.PLAYING) {
+                    update(ref(db, 'liveData/media'), { time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
+                }
+            }, 3000);
+        };
+
         document.getElementById('localAudioInput').onchange = function(e) {
             const file = e.target.files[0];
             if(file) {
+                document.getElementById('mediaSelectorModal').style.display = 'none';
+                document.getElementById('adminSharedPlayer').style.display = 'block';
+                document.getElementById('ytAdminContainer').style.display = 'none';
+                
+                if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
+                    try { ytPlayerAdmin.stopVideo(); } catch(err){}
+                }
+                clearInterval(syncInterval);
+                remove(ref(db, 'liveData/media')); 
+
                 const player = document.getElementById('localAudioPlayer');
                 player.src = URL.createObjectURL(file);
                 player.style.display = 'block';
+                player.play();
+                
                 if(!isLive) {
                     showToast("تنبيه: لتسمع الأغنية مع الزوار، ابدأ البث أولاً!", "error");
                 }
