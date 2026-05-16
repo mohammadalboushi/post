@@ -1166,16 +1166,11 @@
 
         document.getElementById('startRecordBtn').onclick = async () => {
             try {
-                initAudioContext(); // تجهيز ميزة الصدى للمرحلة اللي بعد التسجيل
+                initAudioContext(); 
 
-                // طلب المايك مع تفعيل فلاتر العزل تبع النظام وبدون إجبار على مايك محدد
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }
-                });
+                // طلب المايك ببساطة بدون أي فلاتر غبية تخنق الصوت
+                // هيك المتصفح بياخد سماعة السلك فوراً، والمايك بياخد حساسيته الطبيعية العالية
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
                 mediaRecorder = new MediaRecorder(stream);
                 mediaRecorder.start();
@@ -1187,7 +1182,6 @@
                     document.getElementById('audioPreview').src = URL.createObjectURL(recordedAudioBlob);
                     document.getElementById('audioPreview').style.display = 'block';
                     
-                    // إظهار عداد الصدى وتصفيره
                     document.getElementById('reverbControl').style.display = 'block';
                     document.getElementById('reverbSlider').value = 0;
                     document.getElementById('reverbValueTxt').innerText = '0%';
@@ -1272,6 +1266,24 @@
             return bufferToWave(renderedBuffer, renderedBuffer.length);
         }
 
+        // كود جديد: لتشغيل الملف المرفوع من الجهاز وإظهار عداد الصدى
+        document.getElementById('postAudioFile').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                initAudioContext();
+                const fileURL = URL.createObjectURL(this.files[0]);
+                const preview = document.getElementById('audioPreview');
+                preview.src = fileURL;
+                preview.style.display = 'block';
+                
+                // إظهار العداد وتصفيره
+                document.getElementById('reverbControl').style.display = 'block';
+                document.getElementById('reverbSlider').value = 0;
+                document.getElementById('reverbValueTxt').innerText = '0%';
+                if(wetGainNode) wetGainNode.gain.value = 0;
+            }
+        });
+
+        // دالة النشر المعدلة لتطبيق الصدى على كل شيء
         document.getElementById('publishBtn').onclick = async () => {
             const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
@@ -1301,7 +1313,8 @@
                 const reverbVal = document.getElementById('reverbSlider').value;
 
                 if (audioToUpload) {
-                    if (!audioInput.files.length && reverbVal > 0) {
+                    // هون شلنا الشرط اللي كان يمنع الملفات المرفوعة، صار يطبق على الكل
+                    if (reverbVal > 0) {
                         btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> جاري دمج الصدى...`;
                         audioToUpload = await applyReverbAndGetBlob(audioToUpload, reverbVal);
                     }
