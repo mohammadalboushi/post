@@ -1166,12 +1166,14 @@
 
         // --- دوال الصدى والتسجيل ---
         function generateReverb(ctx) {
-            const length = ctx.sampleRate * 1.5; // خففناها لـ 1.5 ثانية لتسريع المعالجة عالموبايل
+            const length = ctx.sampleRate * 1.5; 
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
             for (let i = 0; i < length; i++) {
                 const decay = Math.pow(1 - i / length, 4);
-                impulse.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay;
-                impulse.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay;
+                left[i] = (Math.random() * 2 - 1) * decay;
+                right[i] = (Math.random() * 2 - 1) * decay;
             }
             return impulse;
         }
@@ -1256,7 +1258,7 @@
             }
         };
 
-        // دالة تحويل الصوت لمعالجته مع الصدى
+        // دالة تحويل الصوت (نسخة صاروخية لمنع تعليق المتصفح)
         function bufferToWave(abuffer, len) {
             let numOfChan = abuffer.numberOfChannels,
             length = len * numOfChan * 2 + 44,
@@ -1274,13 +1276,17 @@
 
             for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
 
-            while(pos < length) {
+            // السر هون: معالجة سريعة بالذاكرة المباشرة 
+            const int16View = new Int16Array(buffer, 44);
+            let writePos = 0;
+            
+            while(offset < len) {
                 for(i = 0; i < numOfChan; i++) {
-                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
-                    view.setInt16(pos, sample, true);
+                    sample = channels[i][offset];
+                    sample = sample < -1 ? -1 : (sample > 1 ? 1 : sample);
+                    int16View[writePos++] = sample < 0 ? sample * 32768 : sample * 32767;
                 }
-                offset++
+                offset++;
             }
             return new Blob([buffer], {type: "audio/wav"});
         }
