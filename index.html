@@ -631,6 +631,16 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
         let currentPostId = new URLSearchParams(window.location.search).get('post');
         let favorites = JSON.parse(localStorage.getItem('favPosts') || '[]');
         let showFavoritesOnly = false;
+        // حساس لمعرفة إذا في صوت شغال لمنع رفة الصفحة
+        let isAudioPlaying = false;
+        document.addEventListener('play', (e) => { if(e.target && e.target.tagName === 'AUDIO') isAudioPlaying = true; }, true);
+        document.addEventListener('pause', (e) => { if(e.target && e.target.tagName === 'AUDIO') isAudioPlaying = false; }, true);
+        document.addEventListener('ended', (e) => { 
+            if(e.target && e.target.tagName === 'AUDIO') {
+                isAudioPlaying = false;
+                renderPosts(document.getElementById('searchInput').value); // تحديث الصفحة بس يخلص الصوت
+            }
+        }, true);
 
         const initTheme = () => {
             const savedTheme = localStorage.getItem('theme');
@@ -663,13 +673,14 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
             renderPosts();
         };
 
-        window.openPost = (id, e) => {
-            if(e && (e.target.closest('button') || e.target.closest('a') || e.target.closest('.post-content'))) return;
+                window.openPost = (id, e) => {
+            if(e && (e.target.closest('button') || e.target.closest('a') || e.target.closest('.post-content') || e.target.closest('audio') || e.target.tagName.toLowerCase() === 'audio')) return;
             history.pushState({post: id}, '', '?post=' + id);
             currentPostId = id;
             renderPosts();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+
 
         window.addEventListener('popstate', () => {
             const params = new URLSearchParams(window.location.search);
@@ -877,6 +888,7 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
         });
 
         function renderPosts(query = '') {
+            if (isAudioPlaying) return; // 🔴 هنا السحر! يمنع رفة الصفحة وقطع الصوت أثناء الاستماع
             feedContainer.innerHTML = '';
             let filtered = [...allFetchedPosts];
 
@@ -971,9 +983,11 @@ import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } fr
                                 </button>
                             </div>
                         </div>
-                        ${cleanTitle ? `<div class="post-title">${cleanTitle}</div>` : ''}
-                        ${post.audioUrl ? `<audio controls src="${escapeHTML(post.audioUrl)}" onplay="incrementPlayCount('${post.id}', event)" style="width: 100%; margin-bottom: 16px; border-radius: 8px; outline: none;"></audio>` : ''}
+                                                ${cleanTitle ? `<div class="post-title">${cleanTitle}</div>` : ''}
+                        ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" class="post-image" loading="lazy" alt="صورة المنشور">` : ''}
+                        ${post.audioUrl ? `<div onclick="event.stopPropagation()" onpointerdown="event.stopPropagation()" ontouchstart="event.stopPropagation()"><audio controls src="${escapeHTML(post.audioUrl)}" onplay="incrementPlayCount('${post.id}', event)" style="width: 100%; margin-bottom: 16px; border-radius: 8px; outline: none;"></audio></div>` : ''}
                         ${contentHTML}
+
                     </div>
                     <div class="card-footer">
                         <span class="read-time"><i class="far fa-clock" style="margin-left:4px; font-size:0.7rem;"></i>${readTime(post.content)}</span>

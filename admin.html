@@ -1741,7 +1741,10 @@
                     document.getElementById('liveStatusText').innerText = 'أنت على الهواء';
                     document.getElementById('liveStatusText').style.color = 'var(--danger)';
                     
-                    set(ref(db, 'liveData/status'), { isLive: true, startedAt: Date.now() });
+                    // تصفير الدردشة والطلبات والمستمعين من الجذور مع كل بث جديد
+set(ref(db, 'liveData'), {
+    status: { isLive: true, startedAt: Date.now() }
+});
 
                     startTimer();
                     setupVisualizer();
