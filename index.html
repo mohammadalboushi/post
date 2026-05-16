@@ -683,7 +683,7 @@
         let allFetchedPosts = [];
         onValue(ref(db, 'posts'), snap => {
             const data = snap.val();
-            if(data) allFetchedPosts = Object.entries(data).map(([k,v])=>({id:k,...v})).sort((a,b)=>(b.order||0)-(a.order||0));
+            if(data) allFetchedPosts = Object.entries(data).map(([k,v])=>({id:k,...v})).sort((a,b)=>(a.order||0)-(b.order||0));
             renderPosts(document.getElementById('searchInput').value);
         });
 
@@ -693,6 +693,9 @@
             if (isAudioPlaying) return; // يمنع الرفة!
             const container = document.getElementById('feedContainer'); container.innerHTML = '';
             let filtered = query ? allFetchedPosts.filter(p => (p.title||'').includes(query) || (p.content||'').includes(query)) : allFetchedPosts;
+            
+            const badge = document.getElementById('postCountBadge');
+            if(badge) badge.innerText = filtered.length + ' منشور';
             
             filtered.forEach(post => {
                 const card = document.createElement('div'); card.className = 'post-card';
@@ -829,8 +832,8 @@
                 const isMe = m.senderId === visitorId;
                 list.innerHTML += `
                     <div class="chat-bubble ${isMe ? 'mine' : ''}">
-                        <span class="chat-sender">${escapeHTML(m.name)}</span>
-                        ${escapeHTML(m.text)}
+                        <span class="chat-sender">${m.name}</span>
+                        ${m.text}
                     </div>
                 `;
             });
