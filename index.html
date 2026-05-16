@@ -606,7 +606,8 @@
 
     <script type="module">
         // ضفتلك دوال الإرسال و onDisconnect مشان الدردشة والعداد يشتغلوا
-        import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, push, set, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBB_U4C880PW4GxZd8FALv8yBSiP2mNeBY",
