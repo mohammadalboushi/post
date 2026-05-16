@@ -1727,10 +1727,23 @@
                     });
                     liveSourceNode = liveAudioCtx.createMediaStreamSource(liveMicStream);
 
-                    // 2. إنشاء الفلاتر للمدير
-                    liveNoiseFilter = liveAudioCtx.createBiquadFilter();
-                    liveNoiseFilter.type = 'highpass';
-                    liveNoiseFilter.frequency.value = (document.getElementById('noiseSlider').value / 100) * 800; 
+                    // 2. إنشاء الفلاتر (بوابة الضجيج الحقيقية) للمدير
+                    let adminAnalyser = liveAudioCtx.createAnalyser();
+                    adminAnalyser.fftSize = 256;
+                    liveSourceNode.connect(adminAnalyser);
+
+                    liveNoiseFilter = liveAudioCtx.createGain(); // قلبناها لبوابة (Gate)
+                    let checkAdminGate = () => {
+                        if(!isLive) return;
+                        requestAnimationFrame(checkAdminGate);
+                        const data = new Uint8Array(adminAnalyser.frequencyBinCount);
+                        adminAnalyser.getByteFrequencyData(data);
+                        let sum = 0; for(let i=0; i<data.length; i++) sum += data[i];
+                        let threshold = parseInt(document.getElementById('noiseSlider').value) * 1.5; // الحساسية
+                        // إذا الصوت أعلى من الحساسية افتح البوابة (1)، وإذا أقل سكرها (0)
+                        liveNoiseFilter.gain.setTargetAtTime((sum / data.length) >= threshold ? 1 : 0, liveAudioCtx.currentTime, 0.05);
+                    };
+                    checkAdminGate();
 
                     liveReverbNode = liveAudioCtx.createConvolver();
                     liveReverbNode.buffer = generateReverb(liveAudioCtx);
@@ -1789,9 +1802,20 @@
                             guestMediaStream = new MediaStream([user.audioTrack.getMediaStreamTrack()]);
                             guestSourceNode = liveAudioCtx.createMediaStreamSource(guestMediaStream);
                             
-                            guestNoiseFilter = liveAudioCtx.createBiquadFilter(); 
-                            guestNoiseFilter.type = 'highpass'; 
-                            guestNoiseFilter.frequency.value = (document.getElementById('guestNoiseSlider').value / 100) * 800;
+                            let guestAnalyser = liveAudioCtx.createAnalyser();
+                            guestAnalyser.fftSize = 256;
+                            guestSourceNode.connect(guestAnalyser);
+
+                            guestNoiseFilter = liveAudioCtx.createGain(); 
+                            let checkGuestGate = () => {
+                                requestAnimationFrame(checkGuestGate);
+                                const data = new Uint8Array(guestAnalyser.frequencyBinCount);
+                                guestAnalyser.getByteFrequencyData(data);
+                                let sum = 0; for(let i=0; i<data.length; i++) sum += data[i];
+                                let threshold = parseInt(document.getElementById('guestNoiseSlider').value) * 1.5;
+                                guestNoiseFilter.gain.setTargetAtTime((sum / data.length) >= threshold ? 1 : 0, liveAudioCtx.currentTime, 0.05);
+                            };
+                            checkGuestGate();
 
                             guestReverbNode = liveAudioCtx.createConvolver(); 
                             guestReverbNode.buffer = generateReverb(liveAudioCtx);
@@ -1825,7 +1849,6 @@
                             };
                             document.getElementById('guestNoiseSlider').oninput = e => { 
                                 document.getElementById('guestNoiseVal').innerText=e.target.value+'%'; 
-                                guestNoiseFilter.frequency.value = (e.target.value/100)*800; 
                             };
                             document.getElementById('guestRevSlider').oninput = e => { 
                                 document.getElementById('guestRevVal').innerText=e.target.value+'%'; 
@@ -1892,9 +1915,7 @@
 
         if(document.getElementById('noiseSlider')) {
             document.getElementById('noiseSlider').oninput = (e) => {
-                const val = e.target.value;
-                document.getElementById('noiseVal').innerText = val + '%';
-                if(liveNoiseFilter) liveNoiseFilter.frequency.value = (val / 100) * 800; 
+                document.getElementById('noiseVal').innerText = e.target.value + '%';
             };
         }
 
@@ -1989,6 +2010,8 @@
             if(!reqList) return;
             reqList.innerHTML = '';
             
+            let hasApproved = false;
+
             if(data) {
                 let pendingCount = 0;
                 Object.entries(data).forEach(([uid, req]) => {
@@ -2004,6 +2027,17 @@
                             </div>
                         `;
                     } else if (req.status === 'approved') {
+                        hasApproved = true;
+                        // نظهر الضيف الحالي بقائمة الطلبات مع زر إنزال مباشر
+                        reqList.innerHTML += `
+                            <div class="request-item" style="border-right: 3px solid var(--success); background: var(--success-bg);">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--success);"><i class="fas fa-headset"></i> ${req.name} (على الهواء)</span>
+                                <div class="request-actions">
+                                    <button class="btn btn-danger-soft" onclick="removeGuest('${uid}')" style="padding: 4px 8px; font-size: 0.7rem;"><i class="fas fa-sign-out-alt"></i> إنزال</button>
+                                </div>
+                            </div>
+                        `;
+                        // تحديث اسمه بنافذة مكسر الضيف كمان
                         document.getElementById('coHostName').innerText = req.name;
                         const dropBtn = document.getElementById('kickGuestBtn');
                         if(dropBtn) dropBtn.onclick = () => removeGuest(uid);
@@ -2015,11 +2049,17 @@
                     reqBadge.innerText = pendingCount;
                 } else {
                     reqBadge.style.display = 'none';
-                    reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
+                    if(!hasApproved) {
+                        reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
+                    }
                 }
             } else {
                 reqBadge.style.display = 'none';
                 reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
+            }
+
+            // تصفير اسم الضيف إذا مافي حدا
+            if(!hasApproved) {
                 document.getElementById('coHostName').innerText = "لا يوجد ضيف حالياً";
             }
         });
