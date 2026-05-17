@@ -78,10 +78,9 @@ onAuthStateChanged(auth, (user) => {
 
 document.getElementById('loginBtn').onclick = () => {
     const btn = document.getElementById('loginBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل لجوجل...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فتح نافذة جوجل...';
     
-    // استخدام التحويل المباشر اللي بيشتغل حصراً على الجوالات
-    signInWithRedirect(auth, provider).catch(error => {
+    signInWithPopup(auth, provider).catch(error => {
         alert("صار خطأ بتسجيل الدخول: " + error.message);
         btn.innerHTML = 'متابعة مع Google';
     });
