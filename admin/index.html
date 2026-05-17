@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم</title>    	
+    <link rel="manifest" href="pwa.json">
+    <meta name="theme-color" content="#0d0d0f">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="admin.css">
+
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+</head>
+<body>
+
+    <div id="login-section">
+        <div class="login-card">
+            <div class="login-icon">✦</div>
+            <div class="login-title">لوحة التحكم</div>
+            <p class="login-sub">سجّل دخولك للوصول إلى<br>إدارة المنشورات</p>
+            <button class="google-btn" id="loginBtn">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                متابعة مع Google
+            </button>
+        </div>
+    </div>
+
+    <div class="app-shell" id="app-shell" style="display:none;">
+
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">✦</div>
+                <div>
+                    <div class="logo-text">منشوراتي</div>
+                    <div class="logo-sub">Admin Panel</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-label">الإدارة</div>
+                <a class="nav-item active" href="#">
+                    <i class="fas fa-layer-group"></i>
+                    المنشورات
+                </a>
+                <a class="nav-item" href="index.html" target="_blank">
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                    عرض الموقع
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card" id="userCard">
+                    <div class="user-avatar" id="userAvatar">أ</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">المستخدم</div>
+                        <div class="user-role">مدير</div>
+                    </div>
+                    <i class="fas fa-sign-out-alt" style="color:var(--ink-faint); font-size:0.8rem;" id="logoutBtn"></i>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div class="topbar-title">إدارة / <span>المنشورات</span></div>
+                <div class="topbar-actions">
+                    <button class="btn btn-ghost" onclick="document.querySelector('.list-pane').scrollIntoView({behavior:'smooth'})">
+                        <i class="fas fa-list"></i> المنشورات
+                    </button>
+                    <button class="btn btn-primary" id="installAppBtn" style="display: none;">
+                        <i class="fas fa-download"></i> تثبيت التطبيق
+                    </button>
+                    <button class="btn btn-danger-soft" id="openStudioBtn" style="background: var(--danger); color: white;">
+                        <i class="fas fa-podcast"></i> استوديو البث
+                    </button>
+                    <a href="index.html" target="_blank" class="btn btn-ghost">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                        الموقع
+                    </a>
+                    <button class="btn btn-ghost" id="logoutTopBtn">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-strip" id="statsStrip">
+                <div class="stat-pill">
+                    <div class="stat-val" id="statTotal">–</div>
+                    <div class="stat-lbl">إجمالي</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="stat-val" id="statPinned">–</div>
+                    <div class="stat-lbl">مثبت</div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+
+                <div class="editor-pane">
+                    <div class="pane-header">
+                        <div class="pane-title">محرر المنشور</div>
+                    </div>
+
+                    <div class="edit-mode-banner" id="editBanner">
+                        <i class="fas fa-pen"></i>
+                        وضع التعديل — أنت تعدّل منشوراً موجوداً
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">العنوان</label>
+                        <input type="text" id="postTitle" placeholder="عنوان المنشور (اختياري)">
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">صورة المنشور (اختياري)</label>
+                        <input type="file" id="postImageFile" accept="image/*" style="padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); width: 100%;">
+                        <input type="hidden" id="postImageUrl">
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">صوت المنشور (رفع أو تسجيل)</label>
+                        <input type="file" id="postAudioFile" accept="audio/*" style="padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); width: 100%;">
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="button" id="startRecordBtn" class="btn btn-primary" style="flex: 1;"><i class="fas fa-microphone"></i> تسجيل المايك</button>
+                            <button type="button" id="stopRecordBtn" class="btn btn-danger-soft" style="display:none; flex: 1;"><i class="fas fa-stop"></i> إيقاف التسجيل</button>
+                        </div>
+                        
+                        <audio id="audioPreview" controls style="display:none; width: 100%; margin-top: 12px; height: 40px; outline: none;"></audio>
+                        
+                        <div id="reverbControl" style="display:none; margin-top: 15px; background: var(--surface-3); padding: 12px; border-radius: var(--radius-sm);">
+                            <label class="field-label" style="display: flex; justify-content: space-between;">
+                                <span>مستوى الصدى (Reverb)</span>
+                                <span id="reverbValueTxt" style="color: var(--accent);">0%</span>
+                            </label>
+                            <input type="range" id="reverbSlider" min="0" max="100" value="0" style="width: 100%; accent-color: var(--accent);">
+                        </div>
+
+                        <input type="hidden" id="postAudioUrl">
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">المحتوى <span style="color:var(--danger)">*</span></label>
+                        <textarea id="postContent" placeholder="اكتب محتوى منشورك هنا..."></textarea>
+                        <div class="char-counter" id="charCounter">0 حرف</div>
+                    </div>
+
+                    <div class="editor-actions">
+                        <button id="publishBtn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            نشر
+                        </button>
+                        <button id="cancelEditBtn" class="btn btn-cancel" style="display:none;">
+                            إلغاء
+                        </button>
+                    </div>
+                </div>
+
+                <div class="list-pane">
+                    <div class="list-pane-header">
+                        <div class="list-pane-title">المنشورات المنشورة</div>
+                        <div class="search-input-wrap" style="margin-bottom: 12px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-input" id="searchInput" placeholder="بحث في المنشورات...">
+                        </div>
+                        <div class="bulk-actions" id="bulkActions">
+                            <input type="checkbox" id="selectAllCb" title="تحديد الكل">
+                            <span style="font-size: 0.8rem; color: var(--ink-muted); margin-left: auto;">تحديد الكل</span>
+                            <button class="btn btn-ghost" id="bulkHideBtn" style="padding: 6px 12px; font-size: 0.75rem;"><i class="fas fa-eye-slash"></i> إخفاء/إظهار</button>
+                            <button class="btn btn-danger-soft" id="bulkDeleteBtn" style="padding: 6px 12px; font-size: 0.75rem;"><i class="fas fa-trash"></i> حذف</button>
+                        </div>
+                    </div>
+                    <div class="list-scroll">
+                        <div id="postsList"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-backdrop" id="deleteModal">
+        <div class="modal">
+            <div class="modal-icon"><i class="fas fa-trash"></i></div>
+            <div class="modal-title">حذف المنشور؟</div>
+            <p class="modal-desc">هذا الإجراء لا يمكن التراجع عنه. سيُحذف المنشور نهائياً من قاعدة البيانات.</p>
+            <div class="modal-actions">
+                <button id="confirmDelBtn" class="btn btn-danger-soft" style="flex:1;">
+                    <i class="fas fa-trash"></i> حذف نهائياً
+                </button>
+                <button onclick="closeModal()" class="btn btn-ghost" style="flex:1;">تراجع</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="liveStudioModal">
+        <div class="admin-menu-overlay" id="adminMenuOverlay" onclick="closeAdminMenu()"></div>
+        <div class="admin-side-menu" id="adminSideMenu">
+            <div style="padding: 24px 20px; background: var(--surface-2); font-weight: 900; font-size: 1.2rem; border-bottom: 1px solid var(--border); color: var(--accent);"><i class="fas fa-podcast"></i> خيارات البث</div>
+            <div class="menu-item" onclick="openMediaSelector(); closeAdminMenu();"><i class="fab fa-youtube" style="color: #ef4444; width: 20px;"></i> مشاركة صوت/يوتيوب</div>
+            <div class="menu-item" onclick="openMixerModal('adminMixerModal'); closeAdminMenu();"><i class="fas fa-sliders-h" style="color: var(--accent); width: 20px;"></i> مكسري</div>
+            <div class="menu-item" onclick="openMixerModal('guestMixerModal'); closeAdminMenu();"><i class="fas fa-headphones" style="color: var(--warning); width: 20px;"></i> مكسر الضيف</div>
+            <div class="menu-item danger" id="menuStopMedia" style="display: none;" onclick="stopSharedMedia(); closeAdminMenu();"><i class="fas fa-stop-circle" style="width: 20px;"></i> إغلاق الموسيقى</div>
+            <div class="menu-item" onclick="clearChat(); closeAdminMenu();"><i class="fas fa-trash-alt" style="color: var(--ink-muted); width: 20px;"></i> حذف جميع الرسائل</div>
+            <div class="menu-item" onclick="closeStudioModalOnly(); closeAdminMenu();"><i class="fas fa-sign-out-alt" style="color: var(--ink-muted); width: 20px;"></i> مغادرتي دون إنهاء البث</div>
+            <div class="menu-item danger" onclick="stopLive(); closeAdminMenu();"><i class="fas fa-power-off" style="width: 20px;"></i> إنهاء هذا البث</div>
+        </div>
+
+        <div class="studio-header" style="flex-direction: row-reverse;">
+            <button class="btn btn-ghost" onclick="openAdminMenu()" style="font-size: 1.3rem; padding: 6px 12px; margin-right: auto; color: var(--ink);"><i class="fas fa-bars"></i></button>
+            
+            <div class="studio-status">
+                <div class="live-dot" id="liveIndicator"></div>
+                <div class="live-timer" id="liveTimer" style="margin-left: 10px;">00:00</div>
+                <div style="color: var(--accent); font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px;" onclick="openViewersList()"><i class="fas fa-users"></i> <span id="viewersCount">0</span></div>
+                
+                <div class="req-bell" id="reqBellIcon" onclick="openRequestsModal()" title="طلبات المايك">
+                    <i class="fas fa-bell"></i>
+                    <div class="badge" id="reqBellBadge">0</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="startLiveBtn" style="margin-left: 10px;"><i class="fas fa-play"></i> بدء البث</button>
+            <button class="btn btn-danger-soft" id="stopLiveBtn" style="display: none; margin-left: 10px;"><i class="fas fa-stop"></i> إنهاء</button>
+        </div>
+
+        <div class="studio-body">
+            
+            <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 30px;">
+                <div style="position: absolute; top: 5px; right: 10px; z-index: 10; color: #fff; font-size: 0.75rem; font-weight: bold;">المشغل المباشر</div>
+                <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
+                <div id="ytAudioPlaceholder" style="width:100%; height:100px; display:none; align-items:center; justify-content:center; color:var(--accent); font-size:2rem; background:#1a1714;"><i class="fas fa-music fade-anim"></i></div>
+                <div id="localPlayerWrapper" style="display:none; padding: 15px; background: var(--surface-2);">
+                    <video id="localAudioPlayer" style="display:none; width: 100%; max-height: 200px; border-radius: 10px; margin-bottom: 10px;"></video>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="localTimeCurrent" style="font-size:0.7rem; color:var(--ink-muted);">00:00</span>
+                        <input type="range" id="localAudioSeek" min="0" max="100" value="0" style="flex:1; accent-color: var(--accent);">
+                        <span id="localTimeTotal" style="font-size:0.7rem; color:var(--ink-muted);">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="interaction-panel" style="padding: 15px;">
+                <div class="chat-messages" id="chatArea" style="padding-right: 0;">
+                    <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>
+                </div>
+                <div class="chat-input-area" style="position:relative;">
+                    <input type="text" id="chatInput" class="search-input" placeholder="اكتب رسالة للمستمعين..." style="flex:1; border-radius: 50px;">
+                    <button class="btn btn-primary" style="padding: 8px 12px; border-radius: 50px; width: 45px; display: flex; justify-content: center;" onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="requestsModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-microphone"></i> طلبات التحدث</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div id="requestsList" style="max-height: 300px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewersModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-users"></i> قائمة المشاهدين</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div id="viewersModalList" style="max-height: 300px; overflow-y: auto;">
+                <div style="text-align:center; padding: 20px;">لا يوجد مشاهدين</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mediaSelectorModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-music"></i> مشاركة محتوى للزوار</span> <button class="close-mixer" onclick="document.getElementById('mediaSelectorModal').style.display='none'">×</button></h3>
+            
+            <div class="field" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="field-label" style="color: #ef4444; margin: 0;"><i class="fab fa-youtube"></i> تشغيل من يوتيوب</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="icon-btn" onclick="toggleSharedMediaPlay()" style="width: 28px; height: 28px; background: var(--surface-alt);" title="تشغيل / إيقاف مؤقت"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                        <button class="icon-btn" onclick="stopSharedMedia()" style="width: 28px; height: 28px; background: var(--danger-bg); color: var(--danger);" title="إيقاف نهائي"><i class="fas fa-stop"></i></button>
+                    </div>
+                </div>
+                <input type="text" id="ytLinkInput" placeholder="ضع رابط يوتيوب هنا..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink);">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="startSharedMedia('youtube', 'video')" style="flex:1; justify-content:center;"><i class="fas fa-video"></i> كفيديو</button>
+                    <button class="btn btn-danger-soft" onclick="startSharedMedia('youtube', 'audio')" style="flex:1; justify-content:center;"><i class="fas fa-headphones"></i> كصوت</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="field-label" style="color: var(--accent); margin: 0;"><i class="fas fa-folder-open"></i> تشغيل (صوت/فيديو/صورة)</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="icon-btn" onclick="toggleSharedMediaPlay()" style="width: 28px; height: 28px; background: var(--surface-alt);" title="تشغيل / إيقاف مؤقت"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                        <button class="icon-btn" onclick="stopSharedMedia()" style="width: 28px; height: 28px; background: var(--danger-bg); color: var(--danger);" title="إيقاف نهائي"><i class="fas fa-stop"></i></button>
+                    </div>
+                </div>
+                <input type="file" id="localAudioInput" accept="audio/*,video/*,image/*" style="width: 100%; padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); margin-bottom: 10px;">
+                <p style="font-size: 0.7rem; color: var(--ink-faint); margin-top: 5px; text-align: center;">الصور والفيديو سيتم رفعها تلقائياً ليراها الزوار 🚀</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminMixerModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-sliders-h"></i> إعداداتي (المدير)</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div class="slider-group">
+                <label><span>قوة صوتي (Mic)</span><span id="myVolVal">100%</span></label>
+                <input type="range" id="myVolSlider" min="0" max="150" value="100">
+            </div>
+            <div class="slider-group">
+                <label><span>حجم صوت الأغاني / الميديا</span><span id="mediaVolVal">50%</span></label>
+                <input type="range" id="mediaVolSlider" min="0" max="100" value="50">
+            </div>
+            <div class="slider-group">
+                <label><span>عزل الضجيج (Noise Gate)</span><span id="noiseVal">0%</span></label>
+                <input type="range" id="noiseSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group">
+                <label><span>مستوى الصدى (Reverb)</span><span id="myRevVal">0%</span></label>
+                <input type="range" id="myRevSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <label><span style="color: var(--accent);"><i class="fas fa-headphones"></i> أسمع حالي (Monitor)</span><span id="monitorVal">0%</span></label>
+                <input type="range" id="monitorSlider" min="0" max="100" value="0">
+            </div>
+            
+            <div class="slider-group" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <label style="color: var(--warning); margin-bottom: 10px; display:block; text-align:center;"><i class="fas fa-play-circle"></i> أزرار تشغيل وإيقاف الميديا</label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="toggleSharedMediaPlay()"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                    <button class="btn btn-danger-soft" style="flex:1; justify-content:center;" onclick="stopSharedMedia()"><i class="fas fa-times"></i> إيقاف للكل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="guestMixerModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-headphones"></i> إعدادات الضيف</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div style="font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 15px; text-align: center;" id="coHostName">لا يوجد ضيف حالياً</div>
+            
+            <div class="slider-group">
+                <label><span>قوة صوت الضيف</span><span id="guestVolVal">100%</span></label>
+                <input type="range" id="guestVolSlider" min="0" max="150" value="100">
+            </div>
+            <div class="slider-group">
+                <label><span>عزل ضجيج الضيف</span><span id="guestNoiseVal">0%</span></label>
+                <input type="range" id="guestNoiseSlider" min="0" max="100" value="0">
+            </div>
+            <div class="slider-group">
+                <label><span>صدى الضيف</span><span id="guestRevVal">0%</span></label>
+                <input type="range" id="guestRevSlider" min="0" max="100" value="0">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-ghost" id="muteGuestBtn" style="flex: 1;"><i class="fas fa-microphone-slash"></i> كتم</button>
+                <button class="btn btn-danger-soft" id="kickGuestBtn" style="flex: 1;"><i class="fas fa-sign-out-alt"></i> إنزال</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">
+        <span class="toast-dot success" id="toastDot"></span>
+        <span id="toastMsg"></span>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+</body>
+</html>
