@@ -1012,35 +1012,63 @@
             const ytPlayer = document.getElementById('ytVisitorPlayer');
             const ytAudio = document.getElementById('ytVisitorAudio');
             
-            // قفل الميديا تماماً إذا الزائر ما ضغط "استماع الآن"
             if (!data || !isListening) {
                 if(container) container.style.display = 'none';
                 if (ytPlayerVisitor && ytPlayerVisitor.stopVideo) ytPlayerVisitor.stopVideo();
+                const localVid = document.getElementById('visitorLocalVideo');
+                if(localVid) { localVid.pause(); localVid.remove(); }
                 return;
             }
 
             if(container) {
                 container.style.display = 'block';
-                if (data.display === 'audio') {
+                
+                if (data.type === 'youtube') {
+                    if (data.display === 'audio') {
+                        ytPlayer.style.display = 'none';
+                        ytAudio.style.display = 'flex';
+                        ytAudio.style.height = '80px';
+                        ytAudio.innerHTML = '<i class="fas fa-music fade-anim"></i>';
+                    } else {
+                        ytPlayer.style.display = 'block';
+                        ytAudio.style.display = 'none';
+                    }
+                    
+                    if (!ytPlayerVisitor && isYtReady) {
+                        ytPlayerVisitor = new YT.Player('ytVisitorPlayer', {
+                            height: '100%', width: '100%', videoId: data.url,
+                            playerVars: { 'controls': 0, 'disablekb': 1, 'rel': 0, 'playsinline': 1 },
+                            events: { 'onReady': (e) => syncVisitorPlayer(e.target, data) }
+                        });
+                    } else if (ytPlayerVisitor && ytPlayerVisitor.getVideoData) {
+                        syncVisitorPlayer(ytPlayerVisitor, data);
+                    }
+                } else if (data.type === 'local') {
                     ytPlayer.style.display = 'none';
                     ytAudio.style.display = 'flex';
-                } else {
-                    ytPlayer.style.display = 'block';
-                    ytAudio.style.display = 'none';
-                }
-            }
-
-            if (!ytPlayerVisitor && isYtReady) {
-                ytPlayerVisitor = new YT.Player('ytVisitorPlayer', {
-                    height: '100%', width: '100%',
-                    videoId: data.url,
-                    playerVars: { 'controls': 0, 'disablekb': 1, 'rel': 0, 'playsinline': 1 },
-                    events: {
-                        'onReady': (e) => syncVisitorPlayer(e.target, data)
+                    ytAudio.style.height = '220px'; // نكبر المساحة للصورة والفيديو
+                    
+                    if (data.display === 'image') {
+                        ytAudio.innerHTML = `<img src="${data.url}" style="max-width:100%; max-height:220px; border-radius:10px; object-fit:contain;">`;
+                    } else if (data.display === 'video') {
+                        // الفيديو صامت عند الزائر لأن الصوت جاية من الأجورا بوضوح!
+                        if(!document.getElementById('visitorLocalVideo')) {
+                            ytAudio.innerHTML = `<video id="visitorLocalVideo" src="${data.url}" style="width:100%; max-height:220px; border-radius:10px; object-fit:contain;" muted playsinline></video>`;
+                        }
+                        const localVid = document.getElementById('visitorLocalVideo');
+                        if (localVid.src !== data.url) localVid.src = data.url;
+                        
+                        if(data.state === 'playing') {
+                            localVid.play().catch(e=>console.log(e));
+                            let expectedTime = data.time + ((Date.now() - data.ts) / 1000);
+                            if (Math.abs(localVid.currentTime - expectedTime) > 2) {
+                                localVid.currentTime = expectedTime;
+                            }
+                        } else {
+                            localVid.pause();
+                        }
                     }
-                });
-            } else if (ytPlayerVisitor && ytPlayerVisitor.getVideoData) {
-                syncVisitorPlayer(ytPlayerVisitor, data);
+                }
             }
         };
 

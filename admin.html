@@ -1025,8 +1025,8 @@
         <div class="admin-side-menu" id="adminSideMenu">
             <div style="padding: 24px 20px; background: var(--surface-2); font-weight: 900; font-size: 1.2rem; border-bottom: 1px solid var(--border); color: var(--accent);"><i class="fas fa-podcast"></i> خيارات البث</div>
             <div class="menu-item" onclick="openMediaSelector(); closeAdminMenu();"><i class="fab fa-youtube" style="color: #ef4444; width: 20px;"></i> مشاركة صوت/يوتيوب</div>
-            <div class="menu-item" onclick="document.getElementById('adminMixerModal').style.display='flex'; closeAdminMenu();"><i class="fas fa-sliders-h" style="color: var(--accent); width: 20px;"></i> مكسري</div>
-            <div class="menu-item" onclick="document.getElementById('guestMixerModal').style.display='flex'; closeAdminMenu();"><i class="fas fa-headphones" style="color: var(--warning); width: 20px;"></i> مكسر الضيف</div>
+            <div class="menu-item" onclick="openMixerModal('adminMixerModal'); closeAdminMenu();"><i class="fas fa-sliders-h" style="color: var(--accent); width: 20px;"></i> مكسري</div>
+            <div class="menu-item" onclick="openMixerModal('guestMixerModal'); closeAdminMenu();"><i class="fas fa-headphones" style="color: var(--warning); width: 20px;"></i> مكسر الضيف</div>
             <div class="menu-item danger" id="menuStopMedia" style="display: none;" onclick="stopSharedMedia(); closeAdminMenu();"><i class="fas fa-stop-circle" style="width: 20px;"></i> إغلاق الموسيقى</div>
             <div class="menu-item" onclick="clearChat(); closeAdminMenu();"><i class="fas fa-trash-alt" style="color: var(--ink-muted); width: 20px;"></i> حذف جميع الرسائل</div>
             <div class="menu-item" onclick="closeStudioModalOnly(); closeAdminMenu();"><i class="fas fa-sign-out-alt" style="color: var(--ink-muted); width: 20px;"></i> مغادرتي دون إنهاء البث</div>
@@ -1058,7 +1058,7 @@
                 <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
                 <div id="ytAudioPlaceholder" style="width:100%; height:100px; display:none; align-items:center; justify-content:center; color:var(--accent); font-size:2rem; background:#1a1714;"><i class="fas fa-music fade-anim"></i></div>
                 <div id="localPlayerWrapper" style="display:none; padding: 15px; background: var(--surface-2);">
-                    <audio id="localAudioPlayer" style="display:none;"></audio>
+                    <video id="localAudioPlayer" style="display:none; width: 100%; max-height: 200px; border-radius: 10px; margin-bottom: 10px;"></video>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span id="localTimeCurrent" style="font-size:0.7rem; color:var(--ink-muted);">00:00</span>
                         <input type="range" id="localAudioSeek" min="0" max="100" value="0" style="flex:1; accent-color: var(--accent);">
@@ -1102,7 +1102,13 @@
             <h3><span><i class="fas fa-music"></i> مشاركة محتوى للزوار</span> <button class="close-mixer" onclick="document.getElementById('mediaSelectorModal').style.display='none'">×</button></h3>
             
             <div class="field" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
-                <label class="field-label" style="color: #ef4444;"><i class="fab fa-youtube"></i> تشغيل من يوتيوب</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="field-label" style="color: #ef4444; margin: 0;"><i class="fab fa-youtube"></i> تشغيل من يوتيوب</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="icon-btn" onclick="toggleSharedMediaPlay()" style="width: 28px; height: 28px; background: var(--surface-alt);" title="تشغيل / إيقاف مؤقت"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                        <button class="icon-btn" onclick="stopSharedMedia()" style="width: 28px; height: 28px; background: var(--danger-bg); color: var(--danger);" title="إيقاف نهائي"><i class="fas fa-stop"></i></button>
+                    </div>
+                </div>
                 <input type="text" id="ytLinkInput" placeholder="ضع رابط يوتيوب هنا..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--ink);">
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-primary" onclick="startSharedMedia('youtube', 'video')" style="flex:1; justify-content:center;"><i class="fas fa-video"></i> كفيديو</button>
@@ -1111,9 +1117,15 @@
             </div>
 
             <div class="field">
-                <label class="field-label" style="color: var(--accent);"><i class="fas fa-file-audio"></i> تشغيل ملف صوتي من جهازك</label>
-                <input type="file" id="localAudioInput" accept="audio/*" style="width: 100%; padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); margin-bottom: 10px;">
-                <p style="font-size: 0.7rem; color: var(--ink-faint); margin-top: 5px; text-align: center;">سيتم بث الصوت مباشرة ليتداخل مع صوتك 🎙️</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="field-label" style="color: var(--accent); margin: 0;"><i class="fas fa-folder-open"></i> تشغيل (صوت/فيديو/صورة)</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="icon-btn" onclick="toggleSharedMediaPlay()" style="width: 28px; height: 28px; background: var(--surface-alt);" title="تشغيل / إيقاف مؤقت"><i class="fas fa-play"></i> / <i class="fas fa-pause"></i></button>
+                        <button class="icon-btn" onclick="stopSharedMedia()" style="width: 28px; height: 28px; background: var(--danger-bg); color: var(--danger);" title="إيقاف نهائي"><i class="fas fa-stop"></i></button>
+                    </div>
+                </div>
+                <input type="file" id="localAudioInput" accept="audio/*,video/*,image/*" style="width: 100%; padding: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); margin-bottom: 10px;">
+                <p style="font-size: 0.7rem; color: var(--ink-faint); margin-top: 5px; text-align: center;">الصور والفيديو سيتم رفعها تلقائياً ليراها الزوار 🚀</p>
             </div>
         </div>
     </div>
@@ -1796,30 +1808,60 @@
             }
         };
 
-        // دوال القائمة الجانبية والرجوع والتحديث
+        // دوال الرجوع الذكي والقوائم
         window.openAdminMenu = () => {
             document.getElementById('adminMenuOverlay').classList.add('open');
             document.getElementById('adminSideMenu').classList.add('open');
-            history.pushState({menu: 'open'}, null, location.href);
+            history.pushState({ level: 'menu' }, null, location.href);
         };
         window.closeAdminMenu = () => {
             document.getElementById('adminMenuOverlay').classList.remove('open');
             document.getElementById('adminSideMenu').classList.remove('open');
         };
-        window.openRequestsModal = () => document.getElementById('requestsModal').style.display = 'flex';
         
+        // دالة موحدة لفتح المكسرات وإضافة خطوة للرجوع
+        window.openMixerModal = (id) => {
+            document.getElementById(id).style.display = 'flex';
+            history.pushState({ level: 'modal', id: id }, null, location.href);
+        };
+
+        // تعديل فتح النوافذ القديمة لتستخدم الستات
+        window.openRequestsModal = () => openMixerModal('requestsModal');
+        window.openViewersList = () => openMixerModal('viewersModal');
+        window.openMediaSelector = () => openMixerModal('mediaSelectorModal');
+
         window.closeStudioModalOnly = () => {
             document.getElementById('liveStudioModal').style.display = 'none';
             document.body.classList.remove('studio-open');
         };
 
+        // إضافة حالة الاستوديو عند الفتح
+        document.getElementById('openStudioBtn').onclick = () => {
+            document.getElementById('liveStudioModal').style.display = 'flex';
+            document.body.classList.add('studio-open');
+            history.pushState({ level: 'studio' }, null, location.href); 
+        };
+
         window.onpopstate = function (e) {
-            if (document.getElementById('adminSideMenu').classList.contains('open')) {
-                closeAdminMenu();
-                history.pushState(null, null, location.href);
-            } else if (document.getElementById('liveStudioModal').style.display === 'flex') {
-                closeStudioModalOnly();
-                history.pushState(null, null, location.href);
+            const studio = document.getElementById('liveStudioModal');
+            if (studio && studio.style.display === 'flex') {
+                
+                // 1. إذا في نافذة إعدادات مفتوحة، سكرها لحالها
+                const openModals = document.querySelectorAll('.mixer-modal[style*="display: flex"]');
+                if (openModals.length > 0) {
+                    openModals.forEach(m => m.style.display = 'none');
+                    return; // رجعنا خطوة
+                }
+                
+                // 2. إذا القائمة الجانبية مفتوحة، سكرها لحالها
+                if (document.getElementById('adminSideMenu').classList.contains('open')) {
+                    closeAdminMenu();
+                    return; // رجعنا خطوة
+                }
+                
+                // 3. إذا مافي شي مفتوح، احبس المستخدم جوا البث! (لا تسمح بالرجوع)
+                history.pushState({ level: 'studio' }, null, location.href);
+                showToast("زر الرجوع معطل. اضغط 'إنهاء البث' أو 'مغادرة' من القائمة.", "warning");
             }
         };
 
@@ -2302,7 +2344,10 @@
             }
         }
 
+                window.activeAdminMedia = null; // متغير ذكي ليعرف مين اللي شغال بالزبط
+
         window.stopSharedMedia = () => {
+            window.activeAdminMedia = null;
             document.getElementById('adminSharedPlayer').style.display = 'none';
             if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
                 try { ytPlayerAdmin.stopVideo(); } catch(err){}
@@ -2311,25 +2356,38 @@
             if(localPlayer) {
                 localPlayer.pause();
                 localPlayer.currentTime = 0;
+                localPlayer.removeAttribute('src'); // مسح المسار بشكل كامل لتأكيد الإيقاف
+                localPlayer.load();
             }
             clearInterval(syncInterval);
             remove(ref(db, 'liveData/media')); 
-            updateMediaMenuButton(false); // لإخفاء زر إغلاق الموسيقى من القائمة الجانبية
+            updateMediaMenuButton(false);
+            
+            // تصفير الخانات عند الإيقاف متل ما طلبت
+            document.getElementById('ytLinkInput').value = '';
+            document.getElementById('localAudioInput').value = '';
         };
 
         window.toggleSharedMediaPlay = () => {
             const localPlayer = document.getElementById('localAudioPlayer');
-            if (document.getElementById('localPlayerWrapper').style.display === 'block') {
-                if (localPlayer.paused) localPlayer.play();
-                else localPlayer.pause();
-            } else if (ytPlayerAdmin && ytPlayerAdmin.getPlayerState) {
-                const state = ytPlayerAdmin.getPlayerState();
-                if (state === YT.PlayerState.PLAYING) ytPlayerAdmin.pauseVideo();
-                else ytPlayerAdmin.playVideo();
+            
+            if (window.activeAdminMedia === 'youtube') {
+                if (ytPlayerAdmin && ytPlayerAdmin.getPlayerState) {
+                    const state = ytPlayerAdmin.getPlayerState();
+                    if (state === 1) ytPlayerAdmin.pauseVideo(); // 1 = PLAYING
+                    else ytPlayerAdmin.playVideo();
+                }
+            } else if (window.activeAdminMedia === 'local') {
+                if (localPlayer) {
+                    if (localPlayer.paused) localPlayer.play();
+                    else localPlayer.pause();
+                }
+            } else {
+                showToast("مافي شي شغال لتوقفو يا عكيد!", "warning");
             }
         };
 
-                window.startSharedMedia = (type, display) => {
+        window.startSharedMedia = (type, display) => {
             if(!isLive) return showToast("يجب بدء البث أولاً!", "error");
             document.getElementById('mediaSelectorModal').style.display = 'none';
             
@@ -2339,25 +2397,24 @@
             
             const url = match[1];
             document.getElementById('adminSharedPlayer').style.display = 'block';
-            document.getElementById('localPlayerWrapper').style.display = 'none';
+            document.getElementById('localPlayerWrapper').style.display = 'block'; 
             
-            // إخفاء الفيديو بحال كصوت فقط
             if(display === 'audio') {
                 document.getElementById('ytAdminContainer').style.display = 'none';
                 document.getElementById('ytAudioPlaceholder').style.display = 'flex';
+                document.getElementById('ytAudioPlaceholder').innerHTML = '<i class="fas fa-music fade-anim"></i>';
             } else {
                 document.getElementById('ytAdminContainer').style.display = 'block';
                 document.getElementById('ytAudioPlaceholder').style.display = 'none';
             }
             
             const localPlayer = document.getElementById('localAudioPlayer');
-            if(localPlayer) {
-                localPlayer.pause();
-            }
+            if(localPlayer) { localPlayer.pause(); localPlayer.style.display = 'none'; }
             
             if(ytPlayerAdmin && ytPlayerAdmin.loadVideoById) {
                 ytPlayerAdmin.loadVideoById(url);
             }
+            window.activeAdminMedia = 'youtube'; // تحديد اليوتيوب كمشغل نشط
 
             const currentVol = parseInt(document.getElementById('mediaVolSlider').value || 50);
             if(ytPlayerAdmin && ytPlayerAdmin.setVolume) {
@@ -2366,61 +2423,122 @@
 
             set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, volume: currentVol, ts: Date.now() });
             updateMediaMenuButton(true);            
+            
+            clearInterval(syncInterval);
             syncInterval = setInterval(() => {
                 if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState && ytPlayerAdmin.getPlayerState() === YT.PlayerState.PLAYING) {
-                    update(ref(db, 'liveData/media'), { time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
+                    const cur = ytPlayerAdmin.getCurrentTime();
+                    const tot = ytPlayerAdmin.getDuration();
+                    update(ref(db, 'liveData/media'), { time: cur, ts: Date.now() });
+                    
+                    if(tot) {
+                        document.getElementById('localAudioSeek').value = (cur / tot) * 100;
+                        document.getElementById('localTimeCurrent').innerText = Math.floor(cur/60).toString().padStart(2,'0') + ":" + Math.floor(cur%60).toString().padStart(2,'0');
+                        document.getElementById('localTimeTotal').innerText = Math.floor(tot/60).toString().padStart(2,'0') + ":" + Math.floor(tot%60).toString().padStart(2,'0');
+                    }
                 }
-            }, 3000);
+            }, 1500);
+
+            document.getElementById('localAudioSeek').oninput = (e) => {
+                if(ytPlayerAdmin && ytPlayerAdmin.getDuration) {
+                    const newTime = (e.target.value / 100) * ytPlayerAdmin.getDuration();
+                    ytPlayerAdmin.seekTo(newTime, true);
+                    update(ref(db, 'liveData/media'), { time: newTime, ts: Date.now() });
+                }
+            };
         };
 
-        // شريط وتوقيت ملف الصوت المحلي
-        const localPlayer = document.getElementById('localAudioPlayer');
-        const localSeek = document.getElementById('localAudioSeek');
-        const curTimeTxt = document.getElementById('localTimeCurrent');
-        const totTimeTxt = document.getElementById('localTimeTotal');
-
-        localPlayer.addEventListener('timeupdate', () => {
-            if(!localPlayer.duration) return;
-            const cur = localPlayer.currentTime;
-            const tot = localPlayer.duration;
-            localSeek.value = (cur / tot) * 100;
-            
-            let cm = Math.floor(cur / 60).toString().padStart(2, '0');
-            let cs = Math.floor(cur % 60).toString().padStart(2, '0');
-            let tm = Math.floor(tot / 60).toString().padStart(2, '0');
-            let ts = Math.floor(tot % 60).toString().padStart(2, '0');
-            
-            curTimeTxt.innerText = `${cm}:${cs}`;
-            totTimeTxt.innerText = `${tm}:${ts}`;
-        });
-
-        localSeek.addEventListener('input', (e) => {
-            if(!localPlayer.duration) return;
-            localPlayer.currentTime = (e.target.value / 100) * localPlayer.duration;
-        });
-
-        document.getElementById('localAudioInput').onchange = function(e) {
+        document.getElementById('localAudioInput').onchange = async function(e) {
             const file = e.target.files[0];
             if(file) {
                 document.getElementById('mediaSelectorModal').style.display = 'none';
                 document.getElementById('adminSharedPlayer').style.display = 'block';
                 document.getElementById('ytAdminContainer').style.display = 'none';
-                document.getElementById('ytAudioPlaceholder').style.display = 'none';
                 document.getElementById('localPlayerWrapper').style.display = 'block';
                 
-                if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
-                    try { ytPlayerAdmin.stopVideo(); } catch(err){}
-                }
+                if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) { try { ytPlayerAdmin.stopVideo(); } catch(err){} }
                 clearInterval(syncInterval);
                 remove(ref(db, 'liveData/media')); 
-            updateMediaMenuButton(false);
+                updateMediaMenuButton(true);
+                window.activeAdminMedia = 'local'; // تحديد الملف المحلي كمشغل نشط
 
-                localPlayer.src = URL.createObjectURL(file);
-                localPlayer.play();
+                const fileUrl = URL.createObjectURL(file);
+                const fileType = file.type.split('/')[0];
+                const localPlayer = document.getElementById('localAudioPlayer');
+                const placeholder = document.getElementById('ytAudioPlaceholder');
+
+                if (fileType === 'image') {
+                    localPlayer.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                    placeholder.innerHTML = `<img src="${fileUrl}" style="max-width:100%; max-height:200px; border-radius:10px; object-fit:contain;">`;
+                } else if (fileType === 'video') {
+                    placeholder.style.display = 'none';
+                    localPlayer.style.display = 'block';
+                    localPlayer.src = fileUrl;
+                    localPlayer.play();
+                } else { 
+                    placeholder.style.display = 'flex';
+                    placeholder.innerHTML = '<i class="fas fa-file-audio fade-anim"></i>';
+                    localPlayer.style.display = 'none';
+                    localPlayer.src = fileUrl;
+                    localPlayer.play();
+                }
                 
                 if(!isLive) {
-                    showToast("تنبيه: لتسمع الأغنية مع الزوار، ابدأ البث أولاً!", "error");
+                    showToast("لتسمع الأغنية مع الزوار، ابدأ البث أولاً!", "error");
+                } else if (fileType === 'image' || fileType === 'video') {
+                    // الرفع التلقائي ليتمكن الزوار من المشاهدة
+                    showToast("جاري الرفع السريع ليراه الزوار...", "warning");
+                    try {
+                        let uploadedUrl = '';
+                        if (fileType === 'image') {
+                            const formData = new FormData(); formData.append("image", file);
+                            const res = await fetch(`https://api.imgbb.com/1/upload?key=10566b9490b2193f1db5498c611ab801`, { method: "POST", body: formData });
+                            const data = await res.json();
+                            if(data.success) uploadedUrl = data.data.url;
+                        } else {
+                            const formData = new FormData(); formData.append("file", file); formData.append("upload_preset", "malaboushi_preset"); 
+                            const res = await fetch(`https://api.cloudinary.com/v1_1/dwqdzwgms/video/upload`, { method: "POST", body: formData });
+                            const data = await res.json();
+                            if(data.secure_url) uploadedUrl = data.secure_url;
+                        }
+                        
+                        if(uploadedUrl) {
+                            showToast("تمت المشاركة مع الزوار بنجاح!");
+                            set(ref(db, 'liveData/media'), { type: 'local', url: uploadedUrl, display: fileType, state: 'playing', time: 0, ts: Date.now() });
+                        }
+                    } catch(err) {
+                        showToast("فشل رفع الملف للزوار", "error");
+                    }
                 }
+
+                clearInterval(syncInterval);
+                if(fileType === 'video' || fileType === 'audio') {
+                    syncInterval = setInterval(() => {
+                        if(!localPlayer.paused && isLive && fileType === 'video') {
+                            update(ref(db, 'liveData/media'), { time: localPlayer.currentTime, ts: Date.now(), state: 'playing' });
+                        }
+                    }, 1500);
+                }
+
+                document.getElementById('localAudioSeek').oninput = (ev) => {
+                    if(!localPlayer.duration) return;
+                    const newTime = (ev.target.value / 100) * localPlayer.duration;
+                    localPlayer.currentTime = newTime;
+                    if(fileType === 'video' && isLive) update(ref(db, 'liveData/media'), { time: newTime, ts: Date.now() });
+                };
+                
+                localPlayer.ontimeupdate = () => {
+                    if(!localPlayer.duration) return;
+                    const cur = localPlayer.currentTime;
+                    const tot = localPlayer.duration;
+                    document.getElementById('localAudioSeek').value = (cur / tot) * 100;
+                    document.getElementById('localTimeCurrent').innerText = Math.floor(cur/60).toString().padStart(2,'0') + ":" + Math.floor(cur%60).toString().padStart(2,'0');
+                    document.getElementById('localTimeTotal').innerText = Math.floor(tot/60).toString().padStart(2,'0') + ":" + Math.floor(tot%60).toString().padStart(2,'0');
+                };
+                
+                localPlayer.onpause = () => { if(fileType === 'video' && isLive) update(ref(db, 'liveData/media'), { state: 'paused' }); };
+                localPlayer.onplay = () => { if(fileType === 'video' && isLive) update(ref(db, 'liveData/media'), { state: 'playing', time: localPlayer.currentTime, ts: Date.now() }); };
             }
         };
 
