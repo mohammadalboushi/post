@@ -62,7 +62,7 @@
         }
 
         body.modal-open {
-            overflow: hidden; /* يمنع التمرير في الخلفية لما تفتح النوافذ */
+            overflow: hidden; 
         }
 
         body::before {
@@ -151,8 +151,6 @@
             transform: translateY(-2px);
         }
 
-        .icon-btn.active-fav { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-
         .post-count-badge {
             font-size: 0.75rem;
             color: var(--ink-muted);
@@ -163,98 +161,41 @@
             transition: var(--transition);
         }
 
-        /* ==================== LIVE BANNER ==================== */
-        .live-banner {
-            max-width: 820px;
-            margin: 20px auto 0;
-            background: linear-gradient(135deg, var(--surface), var(--surface-alt));
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 24px;
+        /* ==================== HEADER LIVE BUTTON ==================== */
+        .header-live-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--shadow-md);
-            animation: slide-down 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            gap: 15px;
-            flex-wrap: wrap;
+            gap: 6px;
+            transition: var(--transition);
         }
-
-        @keyframes slide-down {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .live-banner-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .header-live-btn:hover { background: rgba(239, 68, 68, 0.2); }
+        .header-live-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        
         .live-pulse-dot {
-            width: 14px;
-            height: 14px;
+            width: 8px;
+            height: 8px;
             background: #ef4444;
             border-radius: 50%;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
             animation: pulse-live 1.5s infinite;
         }
 
         @keyframes pulse-live {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        .live-text {
-            font-weight: 900;
-            font-size: 1.1rem;
-            color: var(--ink);
-        }
-
-        .live-banner-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn-live {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-family: inherit;
-            font-weight: 800;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-        }
-
-        .btn-live:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--accent-light); }
-        
-        .btn-interact {
-            background: var(--surface-alt);
-            color: var(--ink);
-            border: 1px solid var(--border);
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-        }
-        .btn-interact:hover { background: var(--border); }
-        .btn-stop { background: #ef4444; color: white; }
-
-        /* --- Live Modals (التصميم الجديد المليء للشاشة) --- */
+        /* --- Live Modals --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -288,22 +229,9 @@
         }
 
         .live-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             padding: 16px 20px;
             border-bottom: 1px solid var(--border);
             background: var(--surface-alt);
-        }
-
-        .live-modal-title {
-            font-size: 1.1rem;
-            font-weight: 900;
-            color: var(--ink);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-close-modal {
@@ -322,41 +250,38 @@
         }
         .btn-close-modal:hover { background: #ef4444; color: #fff; }
 
-        .live-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-        .live-tab {
-            flex: 1; text-align: center; padding: 16px; cursor: pointer;
-            font-weight: 800; font-size: 0.95rem; color: var(--ink-muted);
-            border-bottom: 2px solid transparent; transition: var(--transition);
-        }
-        .live-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface-alt); }
-        
-        .live-tab-body {
-            flex: 1; overflow-y: auto; padding: 20px; display: none; flex-direction: column;
-        }
-        .live-tab-body.active { display: flex; }
-
-        /* Chat */
-        .chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; padding-right: 5px;}
+        /* Chat Area */
+        .chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; padding-right: 5px; }
         .chat-bubble { background: var(--surface-alt); padding: 12px 16px; border-radius: 16px; border-top-right-radius: 4px; font-size: 0.95rem; width: fit-content; max-width: 85%; }
         .chat-bubble.mine { background: var(--accent-light); color: var(--ink); border-top-right-radius: 16px; border-top-left-radius: 4px; align-self: flex-end; }
         .chat-sender { font-size: 0.75rem; font-weight: 800; color: var(--accent); margin-bottom: 6px; display: block;}
         
-        .chat-input-row { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .chat-input-row { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px; flex-shrink: 0; }
         .chat-input { flex: 1; padding: 14px 20px; border-radius: 50px; border: 1px solid var(--border); background: var(--bg); color: var(--ink); font-family: inherit; font-size: 1rem; outline: none; }
         .chat-input:focus { border-color: var(--accent); }
-        .chat-send-btn { background: var(--accent); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .chat-send-btn { background: var(--accent); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
 
-        /* Request */
-        .request-status-box { background: var(--surface-alt); padding: 30px 20px; border-radius: 20px; text-align: center; margin: auto 0; }
-        .req-icon { font-size: 3rem; margin-bottom: 15px; color: var(--accent); }
-        .custom-input { width: 100%; padding: 14px; margin-bottom: 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--ink); font-family: inherit; font-size: 1rem; outline: none; font-weight: bold; text-align: center; transition: var(--transition); }
-        .custom-input:focus { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+        .floating-mic-btn {
+            position: absolute;
+            bottom: 95px; /* رفعناه لفوق لتصير المساحة أريح */
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--surface-alt);
+            color: var(--ink-muted);
+            border: 2px solid var(--border);
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
 
-        /* ==================== END LIVE BANNER CSS ==================== */
-
+        /* Post Items (Main Page) */
         .hero {
             padding: clamp(40px, 8vw, 80px) clamp(16px, 5vw, 80px) clamp(20px, 4vw, 40px);
             max-width: 820px;
@@ -365,12 +290,6 @@
         }
 
         @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .hero-label {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
-            color: var(--accent); text-transform: uppercase; margin-bottom: 16px;
-        }
 
         .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--ink); transition: color var(--transition); }
         .hero h1 em { font-style: normal; color: var(--accent); position: relative; }
@@ -385,20 +304,11 @@
         }
         .search-input:focus { border-color: var(--accent); box-shadow: var(--shadow-md); }
         .search-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--ink-muted); }
-        mark { background-color: rgba(232, 80, 26, 0.2); color: var(--accent); padding: 0 4px; border-radius: 4px; font-weight: bold; }
 
         #posts-container {
             max-width: 820px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 80px) 80px;
             display: flex; flex-direction: column; gap: 16px;
         }
-
-        .single-post-nav { margin-bottom: 24px; display: none; animation: fade-up 0.4s ease both; }
-        .back-btn {
-            display: inline-flex; align-items: center; gap: 8px; background: transparent;
-            color: var(--ink-muted); border: none; font-family: inherit; font-size: 0.95rem;
-            font-weight: 700; cursor: pointer; padding: 8px 16px 8px 0; transition: var(--transition);
-        }
-        .back-btn:hover { color: var(--accent); transform: translateX(4px); }
 
         .post-card {
             background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
@@ -407,74 +317,12 @@
             animation: card-in 0.5s ease both;
         }
 
-        .post-card.clickable-card { cursor: pointer; }
-        .post-card.clickable-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .post-card.single-view { cursor: default; box-shadow: var(--shadow-md); }
-        .post-card.single-view:hover { transform: none; }
-
         @keyframes card-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-        .post-card.pinned { border-color: transparent; box-shadow: 0 0 0 2px var(--pinned), var(--shadow-md); }
-        .post-card.pinned .card-top-stripe { background: var(--pinned); }
-        .card-top-stripe { height: 3px; background: transparent; transition: background 0.3s; }
-        .post-card.clickable-card:hover .card-top-stripe { background: var(--accent-muted); }
-        .post-card.pinned:hover .card-top-stripe { background: var(--pinned); }
-
         .card-body { padding: 24px 28px 20px; }
-        .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;}
-        .meta-left { display: flex; align-items: center; gap: 10px; }
-
-        .pin-chip {
-            display: inline-flex; align-items: center; gap: 5px; background: var(--pinned-light);
-            color: var(--pinned); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
-            padding: 4px 10px; border-radius: 50px;
-        }
-
-        .post-date-tag { font-size: 0.75rem; color: var(--ink-faint); font-weight: 600; }
-
-        .actions-group { display: flex; gap: 8px; align-items: center; }
-
-        .action-btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            background: var(--surface-alt); color: var(--ink-muted);
-            border: none; border-radius: var(--radius-sm); width: 32px; height: 32px;
-            cursor: pointer; transition: all 0.2s ease; position: relative; z-index: 2;
-        }
-        .action-btn:hover { background: var(--accent-light); color: var(--accent); }
-        .action-btn.fav-btn.active { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .action-btn.fav-btn.active i { font-weight: 900; } 
-
-        .copy-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--surface-alt); color: var(--ink-muted);
-            border: none; padding: 7px 14px; border-radius: var(--radius-sm);
-            font-family: inherit; font-size: 0.78rem; font-weight: 700;
-            cursor: pointer; transition: all 0.2s ease; position: relative; z-index: 2;
-        }
-        .copy-btn:hover { background: var(--accent-light); color: var(--accent); }
-        .copy-btn.copied { background: #e8f5e9; color: #2e7d32; }
-
         .post-title { font-size: 1.15rem; font-weight: 900; color: var(--ink); line-height: 1.35; letter-spacing: -0.02em; margin-bottom: 12px; transition: color var(--transition); }
-        .single-view .post-title { font-size: 1.8rem; margin-bottom: 18px; }
         .post-image { width: 100%; height: auto; max-height: 700px; object-fit: contain; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid var(--border); background: transparent; }
-
         .post-content { font-size: 0.97rem; line-height: 1.85; color: var(--ink); opacity: 0.9; white-space: pre-wrap; word-break: break-word; transition: color var(--transition); }
-        .single-view .post-content { font-size: 1.05rem; }
-
-        .post-card.clickable-card .post-content { cursor: text; }
-        .post-content a { color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--accent-muted); transition: border-color 0.2s; position: relative; z-index: 2; }
-        .post-content a:hover { border-bottom-color: var(--accent); }
-
-        .read-more-btn { background: transparent; color: var(--accent); border: none; font-weight: 800; font-family: inherit; cursor: pointer; padding: 0; margin-top: 8px; font-size: 0.9rem; display: inline-block; position: relative; z-index: 2; }
-        .read-more-btn:hover { text-decoration: underline; }
-        .full-text { display: none; }
-        .short-text { display: inline; }
-
-        .card-footer { border-top: 1px solid var(--border); padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: border-color var(--transition); }
-        .read-time, .word-count { font-size: 0.72rem; color: var(--ink-faint); font-weight: 600; }
-
-        .empty-state { text-align: center; padding: 80px 20px; color: var(--ink-muted); animation: fade-up 0.5s ease; }
-        .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.3; }
 
         .loading-feed { display: flex; flex-direction: column; gap: 16px; }
         .skeleton-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 28px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
@@ -492,45 +340,15 @@
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         #toast .toast-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
 
-        footer { text-align: center; padding: 24px; font-size: 0.75rem; color: var(--ink-faint); border-top: 1px solid var(--border); transition: border-color var(--transition); }
-
-        .modal-box-download { 
-            background: var(--surface); padding: 30px 25px; border-radius: 24px; 
-            width: 90%; max-width: 400px; overflow: hidden;
-            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
-            transition: background var(--transition), border-color var(--transition); 
-            animation: fade-up 0.3s ease both;
-        }
-        .modal-title { margin-bottom: 20px; font-weight: 900; font-size: 1.25rem; color: var(--ink); text-align: center;}
-        .fmt-btn { 
-            background: var(--surface-alt); border: 2px solid transparent; padding: 12px; 
-            border-radius: 12px; color: var(--ink-muted); font-family: inherit; 
-            font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem;
-        }
-        .fmt-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+        .fade-anim { animation: fade 2s infinite alternate; }
+        @keyframes fade { 0% {opacity:0.5;} 100% {opacity:1;} }
         
-        .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-primary { 
-            flex: 1; background: var(--accent); color: #fff; border: none; 
-            padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; 
-            font-family: inherit; transition: var(--transition); 
+        .modal-box-viewers {
+            background: var(--surface); padding: 20px; border-radius: 20px;
+            width: 90%; max-width: 350px; box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
         }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-secondary { 
-            flex: 1; background: var(--surface-alt); border: none; padding: 12px; 
-            border-radius: 12px; font-weight: 800; cursor: pointer; color: var(--ink-muted); 
-            font-family: inherit; transition: var(--transition); 
-        }
-        .btn-secondary:hover { background: var(--border); color: var(--ink); }
 
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 1.9rem; }
-            .card-body { padding: 18px 18px 14px; }
-            .card-footer { padding: 10px 18px; }
-            .single-view .post-title { font-size: 1.4rem; }
-            .live-banner { flex-direction: column; text-align: center; }
-            .live-banner-actions { justify-content: center; width: 100%; }
-        }
     </style>
 </head>
 <body>
@@ -543,36 +361,30 @@
             </a>
             
             <div class="header-controls">
+                <div id="headerLiveControls" style="display: none; align-items: center; gap: 8px;">
+                    <button id="btnHeaderJoin" class="header-live-btn" onclick="joinBroadcast()">
+                        <span class="live-pulse-dot"></span> مباشر
+                    </button>
+                    <div id="headerListeningControls" style="display: none; align-items: center; gap: 6px;">
+                        <button class="header-live-btn active" onclick="openLiveInteraction()">
+                            <i class="fas fa-comments"></i> تفاعل
+                        </button>
+                        <button class="icon-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); width: 32px; height: 32px;" onclick="promptLeaveBroadcast()" title="خروج من البث">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <button id="themeToggleBtn" class="icon-btn" title="الوضع الليلي/النهاري" onclick="toggleTheme()">
                     <i class="fas fa-moon"></i>
-                </button>
-                <button id="favFilterBtn" class="icon-btn" title="المفضلة فقط" onclick="toggleFavFilter()">
-                    <i class="far fa-heart"></i>
                 </button>
                 <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
             </div>
         </div>
     </header>
 
-    <div id="liveBanner" class="live-banner" style="display: none;">
-        <div class="live-banner-info">
-            <div class="live-pulse-dot"></div>
-            <span class="live-text">أبو فايز على الهواء مباشرة!</span>
-        </div>
-        <div class="live-banner-actions" id="liveActionsNotListening">
-            <button class="btn-live" onclick="joinBroadcast()"><i class="fas fa-headphones"></i> استماع الآن</button>
-        </div>
-        <div class="live-banner-actions" id="liveActionsListening" style="display: none;">
-            <button class="btn-interact" onclick="openLiveInteraction()"><i class="fas fa-comments"></i> دردشة وطلبات</button>
-            <button class="btn-live btn-stop" onclick="leaveBroadcast()"><i class="fas fa-stop"></i> إيقاف</button>
-        </div>
-    </div>
-
     <div class="hero" id="heroSection">
-        <div class="hero-label">
-            <i class="fas fa-bolt" style="font-size:0.7rem;"></i>
-            آخر المنشورات
-        </div>
+        <div class="hero-label"><i class="fas fa-bolt" style="font-size:0.7rem;"></i> آخر المنشورات</div>
         <h1>الأخبار<br><em>والمقالات</em></h1>
         <p class="hero-sub">كل ما يستحق القراءة، في مكان واحد.</p>
         
@@ -583,12 +395,6 @@
     </div>
 
     <div id="posts-container">
-        <div class="single-post-nav" id="singlePostNav">
-            <button class="back-btn" onclick="window.goHome(event)">
-                <i class="fas fa-arrow-right"></i> عودة للمنشورات
-            </button>
-        </div>
-        
         <div class="loading-feed" id="feedContainer">
             <div class="skeleton-card">
                 <div class="skeleton-line" style="width:30%; height:10px; margin-bottom:20px;"></div>
@@ -600,67 +406,75 @@
         </div>
     </div>
 
-    <footer>
-        صُنع بعناية ← منشوراتي
-    </footer>
-
-    <div id="downloadModal" class="modal-overlay">
-        <div class="modal-box-download">
-            <div class="modal-title">تنزيل كملف</div>
-            <input type="text" id="fileNameInput" class="custom-input" placeholder="اسم الملف..." style="text-align: center;">
-            <div id="formatGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <button class="fmt-btn active" data-fmt="txt">نص (.txt)</button>
-                <button class="fmt-btn" data-fmt="doc">وورد (.doc)</button>
-                <button class="fmt-btn" data-fmt="md">ماركداون (.md)</button>
-                <button class="fmt-btn" data-fmt="html">ويب (.html)</button>
-                <button class="fmt-btn" data-fmt="custom" style="grid-column: span 2;">صيغة أخرى...</button>
-            </div>
-            <input type="text" id="customFormatInput" class="custom-input" placeholder="اكتب الصيغة هنا (مثال: pdf, json)" style="display:none; text-align: center;">
-            <div class="modal-actions">
-                <button onclick="confirmDownload()" class="btn-primary"><i class="fas fa-download"></i> تنزيل</button>
-                <button onclick="closeDownloadModal()" class="btn-secondary">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
     <div id="liveInteractionModal" class="modal-overlay">
         <div class="live-interaction-box">
             
-            <div class="live-modal-header">
-                <h3 class="live-modal-title"><i class="fas fa-broadcast-tower" style="color: var(--danger); margin-left: 8px;"></i> التفاعل المباشر</h3>
-                <button class="btn-close-modal" onclick="closeLiveInteraction()"><i class="fas fa-times"></i> خروج</button>
-            </div>
-            <div id="visitorMediaContainer" style="display: none; width: 100%; border-bottom: 1px solid var(--border); background: #000; transition: height 0.3s;">
-                <div id="ytVisitorPlayer" style="width: 100%; height: 200px;"></div>
+            <div class="live-modal-header" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                    <h3 style="font-size: 1rem; font-weight: 900; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 8px;" id="liveRoomTitle">
+                        <i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> أبو فايز
+                    </h3>
+                    <div style="display:flex; align-items:center; gap: 12px;">
+                        <span id="visitorTimer" style="font-weight: 900; font-family: monospace; font-size: 1rem; color: var(--ink);">00:00</span>
+                        <div style="color: var(--accent); font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="openVisitorViewersList()">
+                            <i class="fas fa-users"></i> <span id="visitorViewersCount">0</span>
+                        </div>
+                        <button class="btn-close-modal" onclick="promptLeaveBroadcast()"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <canvas id="visitorVisualizer" style="width: 100%; height: 20px;"></canvas>
             </div>
 
-            <div class="live-tabs">
-                <div class="live-tab active" onclick="switchLiveTab('chat')">الدردشة</div>
-                <div class="live-tab" onclick="switchLiveTab('request')">طلب التحدث</div>
+            <div id="visitorMediaContainer" style="display: none; width: 100%; background: #000; border-bottom: 1px solid var(--border); pointer-events: none;">
+                <div id="ytVisitorPlayer" style="width: 100%; height: 220px; display: none;"></div>
+                <div id="ytVisitorAudio" style="width: 100%; height: 80px; display: none; align-items: center; justify-content: center; color: var(--accent); font-size: 2rem;">
+                    <i class="fas fa-music fade-anim"></i>
+                </div>
             </div>
-            
-            <div class="live-tab-body active" id="l-tab-chat">
+
+            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 15px; position: relative; background: var(--surface);">
                 <div class="chat-list" id="chatList"></div>
                 <div class="chat-input-row">
                     <input type="text" id="chatMsgInput" class="chat-input" placeholder="اكتب رسالتك...">
                     <button class="chat-send-btn" onclick="sendChatMsg()"><i class="fas fa-paper-plane"></i></button>
                 </div>
+                
+                <button id="floatingMicBtn" class="floating-mic-btn" onclick="handleVisitorMicClick()" title="طلب التحدث">
+                    <i class="fas fa-microphone"></i>
+                </button>
             </div>
 
-            <div class="live-tab-body" id="l-tab-request">
-                <div class="request-status-box">
-                    <i class="fas fa-microphone req-icon"></i>
-                    <h3 style="margin-bottom: 10px; color: var(--ink);">انضم كضيف!</h3>
-                    <p style="font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 20px;">
-                        يمكنك إرسال طلب للمدير للحديث عبر المايكروفون. إذا تم القبول، سيتم فتح المايك الخاص بك.
-                    </p>
-                    <input type="text" id="reqNameInput" class="custom-input" placeholder="اكتب اسمك هنا..." style="margin-bottom: 15px;">
-                    <button class="btn-live" id="sendReqBtn" onclick="sendCoHostRequest()" style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 14px;"><i class="fas fa-paper-plane" style="margin-left: 8px;"></i> إرسال الطلب</button>
-                    
-                    <div id="reqStatusDiv" style="display: none; margin-top: 20px; font-size: 1.1rem; font-weight: bold;">
-                        حالة الطلب: <span id="reqStatusText" style="color: var(--accent);">جاري الانتظار...</span>
-                    </div>
-                </div>
+        </div>
+    </div>
+
+    <div id="visitorViewersModal" class="modal-overlay" style="z-index: 10000;">
+        <div class="modal-box-viewers">
+            <h3 style="text-align: center; margin-bottom: 20px; font-weight: 900; color: var(--ink);"><i class="fas fa-users"></i> المشاهدين الآن</h3>
+            <div id="visitorViewersList" style="max-height: 250px; overflow-y: auto; color: var(--ink);"></div>
+            <button style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 10px; border: none; background: var(--surface-alt); color: var(--ink); font-weight: bold; cursor: pointer;" onclick="document.getElementById('visitorViewersModal').style.display='none'">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="leaveConfirmModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box-viewers" style="text-align: center; max-width: 320px;">
+            <div style="font-size: 3.5rem; color: #ef4444; margin-bottom: 15px;"><i class="fas fa-sign-out-alt"></i></div>
+            <h3 style="margin-bottom: 10px; font-weight: 900; color: var(--ink);">بدك تطلع من البث؟</h3>
+            <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.6;">إذا طلعت رح يوقف الصوت عندك، بس فيك ترجع إيمتى ما بدك بضغطة وحدة.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-live" style="flex:1; justify-content:center; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onclick="confirmLeaveBroadcast()">خروج</button>
+                <button class="btn-interact" style="flex:1; justify-content:center;" onclick="document.getElementById('leaveConfirmModal').style.display='none'">بقاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="micCancelConfirmModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box-viewers" style="text-align: center; max-width: 320px;">
+            <div style="font-size: 3.5rem; color: var(--warning); margin-bottom: 15px;"><i class="fas fa-microphone-slash"></i></div>
+            <h3 style="margin-bottom: 10px; font-weight: 900; color: var(--ink);">بدك تتخلى عن المايك؟</h3>
+            <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.6;">إذا أكدت، رح يتم إلغاء طلبك للحديث وتقدر ترجع تسمع بس.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-live" style="flex:1; justify-content:center; background: var(--warning); color: #000; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);" onclick="confirmMicCancel()">إلغاء الطلب</button>
+                <button class="btn-interact" style="flex:1; justify-content:center;" onclick="document.getElementById('micCancelConfirmModal').style.display='none'">تراجع</button>
             </div>
         </div>
     </div>
@@ -675,9 +489,14 @@
         const db = getDatabase(app);
         
         window.showToast = msg => { document.getElementById('toast-msg').innerText = msg; document.getElementById('toast').classList.add('show'); setTimeout(()=>document.getElementById('toast').classList.remove('show'), 3000); };
-        window.toggleTheme = () => document.body.toggleAttribute('data-theme');
+        window.toggleTheme = () => {
+            if (document.body.getAttribute('data-theme') === 'dark') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        };
 
-        // منع رفة الصفحة أثناء التشغيل
         let isAudioPlaying = false;
         document.addEventListener('play', e => { if(e.target.tagName === 'AUDIO') isAudioPlaying = true; }, true);
         document.addEventListener('pause', e => { if(e.target.tagName === 'AUDIO') isAudioPlaying = false; }, true);
@@ -693,7 +512,7 @@
         document.getElementById('searchInput').oninput = e => renderPosts(e.target.value);
 
         function renderPosts(query = '') {
-            if (isAudioPlaying) return; // يمنع الرفة!
+            if (isAudioPlaying) return; 
             const container = document.getElementById('feedContainer'); container.innerHTML = '';
             let filtered = query ? allFetchedPosts.filter(p => (p.title||'').includes(query) || (p.content||'').includes(query)) : allFetchedPosts;
             
@@ -704,9 +523,12 @@
                 const card = document.createElement('div'); card.className = 'post-card';
                 card.innerHTML = `
                     <div class="card-body">
-                        <div style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:10px; display:flex; justify-content:space-between;">
-                            <span>${new Date(post.timestamp).toLocaleDateString()}</span>
-                            ${post.audioUrl ? `<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-play"></i> ${post.playCount || 0}</span>` : ''}
+                        <div style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <span>${new Date(post.timestamp).toLocaleDateString('ar-EG')}</span>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                ${post.audioUrl ? `<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-play"></i> ${post.playCount || 0}</span>` : ''}
+                                ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i> نسخ النص</button>` : ''}
+                            </div>
                         </div>
                         ${post.title ? `<div class="post-title">${post.title}</div>` : ''}
                         ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ''}
@@ -723,33 +545,90 @@
             event.target.removeAttribute('onplay');
         };
 
+        window.copyPostText = (id) => {
+            const post = allFetchedPosts.find(p => p.id === id);
+            if(post && post.content) {
+                navigator.clipboard.writeText(post.content).then(() => {
+                    showToast("تم نسخ النص بنجاح! 📋");
+                }).catch(err => {
+                    showToast("حدث خطأ أثناء النسخ");
+                });
+            }
+        };
+
         // --- البث المباشر للزوار ---
         const AGORA_APP_ID = "7ca23eb56dfd45f7a89e9fd2a03a40ca";
         let rtcClient = null; let localMicTrack = null; let isListening = false;
         const visitorId = "user_" + Math.floor(Math.random() * 1000000);
         let visitorName = ""; 
+        let visitorTimerInterval = null;
+        let visitorAudioCtx = null;
+        let visitorAnalyser = null;
 
+        // مراقبة حالة البث (والتوقيت)
         onValue(ref(db, 'liveData/status'), snap => {
             const data = snap.val();
-            document.getElementById('liveBanner').style.display = (data && data.isLive) ? 'flex' : 'none';
-            if(!data || !data.isLive) leaveBroadcast();
+            document.getElementById('headerLiveControls').style.display = (data && data.isLive) ? 'flex' : 'none';
+            if(!data || !data.isLive) {
+                leaveBroadcast();
+                clearInterval(visitorTimerInterval);
+                document.getElementById('visitorTimer').innerText = "00:00";
+            } else if (data.isLive && data.startedAt) {
+                clearInterval(visitorTimerInterval);
+                visitorTimerInterval = setInterval(() => {
+                    let diff = Math.floor((Date.now() - data.startedAt) / 1000);
+                    let m = Math.floor(diff / 60).toString().padStart(2, '0');
+                    let s = (diff % 60).toString().padStart(2, '0');
+                    document.getElementById('visitorTimer').innerText = `${m}:${s}`;
+                }, 1000);
+            }
         });
 
-        window.joinBroadcast = async () => {
+        // مراقبة الطرد الفوري من المدير
+        onValue(ref(db, `liveData/kicked/${visitorId}`), snap => {
+            if(snap.exists()) {
+                leaveBroadcast();
+                showToast("لقد تم إخراجك من البث من قبل المدير.");
+                remove(ref(db, `liveData/kicked/${visitorId}`)); 
+            }
+        });
+
+                        window.joinBroadcast = async () => {
             if (!visitorName) {
                 const namePrompt = document.createElement('div');
                 namePrompt.innerHTML = `
-                    <div style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
-                        <div style="background:var(--surface); padding:30px; border-radius:20px; width:90%; max-width:350px; text-align:center; border:1px solid var(--accent);">
-                            <h3 style="margin-bottom:15px; color:var(--ink);">مين معنا؟ 🎧</h3>
-                            <input type="text" id="tempNameInput" class="custom-input" placeholder="اكتب اسمك للإنضمام..." style="margin-bottom:15px; text-align:center;">
-                            <div style="display:flex; gap:10px;">
-                                <button id="confirmNameBtn" class="btn-live" style="flex:1; justify-content:center;">دخول</button>
-                                <button id="cancelNameBtn" class="btn-interact" style="flex:1; justify-content:center;">إلغاء</button>
+                    <style>
+                        @keyframes popInModal {
+                            0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+                            100% { opacity: 1; transform: scale(1) translateY(0); }
+                        }
+                        .modern-input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 4px var(--accent-light) !important; }
+                        .modern-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(232, 80, 26, 0.3) !important; filter: brightness(1.1); }
+                        .modern-btn-secondary:hover { background: var(--border) !important; color: var(--ink) !important; }
+                    </style>
+                    <div class="modal-overlay" style="display:flex; z-index: 10000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+                        <div style="background: var(--surface); padding: 35px 25px; border-radius: 28px; width: 90%; max-width: 340px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4); border: 1px solid var(--border); animation: popInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                            
+                            <div style="width: 76px; height: 76px; background: linear-gradient(135deg, var(--accent-light), var(--surface-alt)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px var(--accent-light), inset 0 2px 4px rgba(255,255,255,0.5);">
+                                <i class="fas fa-headphones-alt" style="font-size: 2.2rem; color: var(--accent);"></i>
+                            </div>
+                            
+                            <h3 style="margin-bottom: 8px; font-weight: 900; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.02em;">مين معنا بالبث؟</h3>
+                            <p style="color: var(--ink-muted); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6;">يا هلا فيك! اكتب اسمك لتشاركنا الدردشة والجو الحلو.</p>
+                            
+                            <div style="position: relative; margin-bottom: 24px;">
+                                <i class="fas fa-user" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 1rem;"></i>
+                                <input type="text" id="tempNameInput" class="modern-input" placeholder="اسمك الكريم..." style="width: 100%; padding: 15px 42px 15px 15px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface-alt); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <button id="cancelNameBtn" class="modern-btn-secondary" style="flex: 1; padding: 14px; border-radius: 16px; border: none; background: var(--surface-alt); color: var(--ink-muted); font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;">إلغاء</button>
+                                <button id="confirmNameBtn" class="modern-btn-primary" style="flex: 1.5; padding: 14px; border-radius: 16px; border: none; background: var(--accent); color: white; font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 20px var(--accent-light); transition: 0.2s;">دخول للبث <i class="fas fa-arrow-left" style="margin-right: 6px; font-size: 0.85rem;"></i></button>
                             </div>
                         </div>
                     </div>
                 `;
+
                 document.body.appendChild(namePrompt);
 
                 document.getElementById('cancelNameBtn').onclick = () => namePrompt.remove();
@@ -768,13 +647,26 @@
             }
         };
 
+
         async function executeJoin() {
             try {
                 if(!rtcClient) {
                     rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                     rtcClient.on("user-published", async (user, mediaType) => {
                         await rtcClient.subscribe(user, mediaType);
-                        if (mediaType === "audio") user.audioTrack.play();
+                        if (mediaType === "audio") {
+                            user.audioTrack.play();
+                            
+                            try {
+                                if(!visitorAudioCtx) visitorAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                const stream = new MediaStream([user.audioTrack.getMediaStreamTrack()]);
+                                const source = visitorAudioCtx.createMediaStreamSource(stream);
+                                visitorAnalyser = visitorAudioCtx.createAnalyser();
+                                visitorAnalyser.fftSize = 256;
+                                source.connect(visitorAnalyser);
+                                drawVisitorVisualizer();
+                            } catch(e) { console.error("Visualizer Error:", e); }
+                        }
                     });
                 }
                 await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, visitorId);
@@ -789,25 +681,74 @@
                 });
 
                 showToast("أنت الآن تستمع للبث 🎧");
-                document.getElementById('liveActionsNotListening').style.display = 'none';
-                document.getElementById('liveActionsListening').style.display = 'flex';
+                document.getElementById('btnHeaderJoin').style.display = 'none';
+                document.getElementById('headerListeningControls').style.display = 'flex';
+                
+                // فتح نافذة الدردشة تلقائياً بمجرد إدخال الاسم
+                openLiveInteraction();
+                
+                // تشغيل الميديا للزائر فقط بعد ما يضغط استماع
+                if(typeof updateVisitorMedia === 'function') updateVisitorMedia();
+                
             } catch (e) { showToast("خطأ بالاتصال"); }
+        }
+
+        // رسم التموجات الصوتية للزائر
+        function drawVisitorVisualizer() {
+            const canvas = document.getElementById("visitorVisualizer");
+            if(!canvas) return;
+            const ctx = canvas.getContext("2d");
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = 20;
+
+            function draw() {
+                if(!isListening) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+                requestAnimationFrame(draw);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                if(visitorAnalyser) {
+                    const dataArray = new Uint8Array(visitorAnalyser.frequencyBinCount);
+                    visitorAnalyser.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+                    let vol = sum / dataArray.length; 
+                    
+                    ctx.fillStyle = "var(--accent)";
+                    let barWidth = Math.max(0, Math.min(canvas.width, vol * 2.5));
+                    ctx.fillRect(canvas.width/2 - barWidth/2, 5, barWidth, 10);
+                }
+            }
+            draw();
         }
 
         window.leaveBroadcast = () => {
             if(localMicTrack) { localMicTrack.close(); localMicTrack = null; }
             if(rtcClient) rtcClient.leave();
             isListening = false;
-            document.getElementById('liveActionsNotListening').style.display = 'flex';
-            document.getElementById('liveActionsListening').style.display = 'none';
+            document.getElementById('btnHeaderJoin').style.display = 'flex';
+            document.getElementById('headerListeningControls').style.display = 'none';
             closeLiveInteraction();
+            if(typeof updateVisitorMedia === 'function') updateVisitorMedia(); // إيقاف الميديا فوراً عند الخروج
             remove(ref(db, `liveData/requests/${visitorId}`)); remove(ref(db, `liveData/viewers/${visitorId}`));
+        };
+
+        // دالة إظهار بطاقة التأكيد
+        window.promptLeaveBroadcast = () => {
+            document.getElementById('leaveConfirmModal').style.display = 'flex';
+        };
+
+        // دالة تأكيد الخروج
+        window.confirmLeaveBroadcast = () => {
+            document.getElementById('leaveConfirmModal').style.display = 'none';
+            leaveBroadcast(); // هاد بيكرش الزائر لبرى وبيرجع زر (استماع الآن)
         };
 
         window.openLiveInteraction = () => {
             document.getElementById('liveInteractionModal').style.display = 'flex';
             document.body.classList.add('modal-open');
-            if(visitorName) document.getElementById('reqNameInput').value = visitorName;
         };
 
         window.closeLiveInteraction = () => {
@@ -815,17 +756,34 @@
             document.body.classList.remove('modal-open');
         };
 
-        window.switchLiveTab = (tab) => {
-            document.querySelectorAll('.live-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.live-tab-body').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('l-tab-' + tab).classList.add('active');
+        // مراقبة وإظهار عدد واسماء المشاهدين للزوار
+        onValue(ref(db, 'liveData/viewers'), snap => {
+            const data = snap.val();
+            const countSpan = document.getElementById('visitorViewersCount');
+            const vList = document.getElementById('visitorViewersList');
+            if(countSpan) countSpan.innerText = data ? Object.keys(data).length : '0';
+            if(vList) {
+                vList.innerHTML = '';
+                if(data) {
+                    Object.values(data).forEach(v => {
+                        vList.innerHTML += `<div style="padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold;"><i class="fas fa-user-circle" style="color: var(--ink-faint); margin-left: 5px;"></i> ${v.name}</div>`;
+                    });
+                } else {
+                    vList.innerHTML = '<div style="text-align:center; color: var(--ink-faint);">لا يوجد مشاهدين</div>';
+                }
+            }
+        });
+
+        window.openVisitorViewersList = () => {
+            document.getElementById('visitorViewersModal').style.display = 'flex';
         };
 
         window.sendChatMsg = () => {
-            const msg = document.getElementById('chatMsgInput').value.trim(); if(!msg) return;
+            const inputField = document.getElementById('chatMsgInput');
+            const msg = inputField.value.trim(); if(!msg) return;
             push(ref(db, 'liveData/chat'), { senderId: visitorId, name: visitorName||"مجهول", text: msg, timestamp: Date.now() });
-            document.getElementById('chatMsgInput').value = '';
+            inputField.value = '';
+            inputField.focus(); // إبقاء الكيبورد مفتوح
         };
 
         onValue(ref(db, 'liveData/chat'), snap => {
@@ -834,8 +792,8 @@
             Object.values(data).sort((a,b)=>a.timestamp-b.timestamp).forEach(m => {
                 const isMe = m.senderId === visitorId;
                 list.innerHTML += `
-                    <div class="chat-bubble ${isMe ? 'mine' : ''}">
-                        <span class="chat-sender">${m.name}</span>
+                    <div class="chat-bubble ${isMe ? 'mine' : ''}" style="${m.senderId === 'admin' ? 'background: var(--accent-light); border:1px solid var(--accent-muted);' : ''}">
+                        <span class="chat-sender" style="${m.senderId === 'admin' ? 'color: var(--accent-muted);' : ''}">${m.senderId === 'admin' ? '👑 ' : ''}${m.name}</span>
                         ${m.text}
                     </div>
                 `;
@@ -843,31 +801,85 @@
             list.scrollTop = list.scrollHeight;
         });
 
-        window.sendCoHostRequest = () => {
-            if(!visitorName) return showToast("يجب إدخال اسم بالاستماع أولاً");
-            set(ref(db, `liveData/requests/${visitorId}`), { name: visitorName, status: 'pending', timestamp: Date.now() });
-            document.getElementById('reqStatusText').innerText = "تم الإرسال.. جاري الانتظار ⏳";
-            document.getElementById('sendReqBtn').style.display = 'none';
-            document.getElementById('reqStatusDiv').style.display = 'block';
+        // زر المايك العائم (طلب التحدث) الذكي
+        let micStatus = 'none'; 
+        window.handleVisitorMicClick = () => {
+            if(micStatus === 'none') {
+                if(!visitorName) {
+                    showToast("يرجى إدخال اسمك أولاً عبر زر الاستماع");
+                    return;
+                }
+                set(ref(db, `liveData/requests/${visitorId}`), { name: visitorName, status: 'pending', timestamp: Date.now() });
+                
+                // إرسال رسالة للدردشة ليعرف الجميع
+                push(ref(db, 'liveData/chat'), {
+                    senderId: 'system', name: 'النظام', text: `🎤 ${visitorName} طلب الصعود للمايك!`, timestamp: Date.now()
+                });
+                
+                showToast("تم إرسال طلب التحدث للمدير");
+            } else if(micStatus === 'pending' || micStatus === 'approved') {
+                // إظهار البطاقة الأنيقة بدل الرسالة البشعة
+                document.getElementById('micCancelConfirmModal').style.display = 'flex';
+            }
+        };
+
+        // دالة تأكيد إلغاء طلب المايك وإرسال الإشعار
+        window.confirmMicCancel = () => {
+            document.getElementById('micCancelConfirmModal').style.display = 'none';
+            remove(ref(db, `liveData/requests/${visitorId}`));
+            
+            // إشعار الدردشة بإلغاء الطلب
+            push(ref(db, 'liveData/chat'), {
+                senderId: 'system', name: 'النظام', text: `❌ ${visitorName} تخلى عن المايك!`, timestamp: Date.now()
+            });
+            
+            showToast("تم إلغاء طلب المايك");
         };
 
         onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             const data = snap.val();
+            const micBtn = document.getElementById('floatingMicBtn');
             if(!data) { 
-                document.getElementById('sendReqBtn').style.display = 'flex'; 
-                document.getElementById('reqStatusDiv').style.display = 'none'; 
-                if(localMicTrack){localMicTrack.close(); localMicTrack=null; rtcClient.unpublish(); showToast("تم إنهاء اتصالك");} 
+                micStatus = 'none';
+                if(micBtn) {
+                    micBtn.style.background = 'var(--surface-alt)';
+                    micBtn.style.color = 'var(--ink-muted)';
+                    micBtn.style.borderColor = 'var(--border)';
+                    micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                }
+                if(localMicTrack){
+                    localMicTrack.close(); localMicTrack=null; 
+                    if(rtcClient) await rtcClient.unpublish(); 
+                    showToast("تم إنهاء اتصال المايك الخاص بك");
+                } 
                 return; 
             }
-            if(data.status === 'approved' && !localMicTrack) {
-                document.getElementById('reqStatusText').innerText = "أنت على الهواء 🎙️";
-                document.getElementById('reqStatusText').style.color = "var(--success)";
-                localMicTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: false, ANS: false }); // بدون فلاتر ليتفلتر من عند المدير
-                await rtcClient.publish([localMicTrack]);
+            
+            if(data.status === 'pending') {
+                micStatus = 'pending';
+                if(micBtn) {
+                    micBtn.style.background = 'var(--warning)';
+                    micBtn.style.color = '#000';
+                    micBtn.style.borderColor = 'var(--warning)';
+                    micBtn.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+                }
+            } else if(data.status === 'approved') {
+                micStatus = 'approved';
+                if(micBtn) {
+                    micBtn.style.background = 'var(--success)';
+                    micBtn.style.color = '#fff';
+                    micBtn.style.borderColor = 'var(--success)';
+                    micBtn.innerHTML = '<i class="fas fa-microphone-alt"></i>';
+                }
+                if(!localMicTrack) {
+                    showToast("أنت على الهواء الآن! 🎙️");
+                    localMicTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: false, ANS: false });
+                    if(rtcClient) await rtcClient.publish([localMicTrack]);
+                }
             }
         });
         
-                // مشغل اليوتيوب للزوار والمزامنة مع المدير
+        // مشغل اليوتيوب والميديا الذكي للزوار
         const ytTag = document.createElement('script');
         ytTag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -880,12 +892,20 @@
             isYtReady = true;
         };
 
-        // مراقبة الميديا من الفايربيس (يتم التحكم بها من طرف المدير)
+        let currentMediaData = null;
         onValue(ref(db, 'liveData/media'), (snap) => {
-            const data = snap.val();
+            currentMediaData = snap.val();
+            updateVisitorMedia();
+        });
+
+        window.updateVisitorMedia = () => {
+            const data = currentMediaData;
             const container = document.getElementById('visitorMediaContainer');
+            const ytPlayer = document.getElementById('ytVisitorPlayer');
+            const ytAudio = document.getElementById('ytVisitorAudio');
             
-            if (!data) {
+            // قفل الميديا تماماً إذا الزائر ما ضغط "استماع الآن"
+            if (!data || !isListening) {
                 if(container) container.style.display = 'none';
                 if (ytPlayerVisitor && ytPlayerVisitor.stopVideo) ytPlayerVisitor.stopVideo();
                 return;
@@ -893,13 +913,12 @@
 
             if(container) {
                 container.style.display = 'block';
-                // إخفاء الفيديو إذا كان المطلوب "صوت" فقط
                 if (data.display === 'audio') {
-                    container.style.height = '0px';
-                    container.style.border = 'none';
+                    ytPlayer.style.display = 'none';
+                    ytAudio.style.display = 'flex';
                 } else {
-                    container.style.height = 'auto';
-                    container.style.borderBottom = '1px solid var(--border)';
+                    ytPlayer.style.display = 'block';
+                    ytAudio.style.display = 'none';
                 }
             }
 
@@ -915,7 +934,7 @@
             } else if (ytPlayerVisitor && ytPlayerVisitor.getVideoData) {
                 syncVisitorPlayer(ytPlayerVisitor, data);
             }
-        });
+        };
 
         function syncVisitorPlayer(player, data) {
             const currentUrl = player.getVideoData().video_id;
@@ -923,7 +942,6 @@
                 player.loadVideoById(data.url, data.time);
             }
 
-            // كتم الصوت كلياً أو تحديد مستواه بدقة لمنع رجوعه لحاله
             if(data.volume !== undefined && player.setVolume) {
                 if(data.volume == 0) {
                     player.mute();
@@ -935,12 +953,8 @@
 
             if (data.state === 'playing') {
                 player.playVideo();
-                
-                // حساب الفارق الزمني بدقة مع النت لمنع تقطيع الصوت وخنقته
                 let expectedTime = data.time + ((Date.now() - data.ts) / 1000);
                 const diff = Math.abs(player.getCurrentTime() - expectedTime);
-                
-                // منع التقديم المستمر (السبب وراء تقطيع الصوت كل 4 ثواني)
                 if (diff > 4) {
                     player.seekTo(expectedTime, true); 
                 }
@@ -948,6 +962,27 @@
                 player.pauseVideo();
             }
         }
+
+        // مراقبة جميع الطلبات لمعرفة إذا في ضيف على الهواء وتغيير العنوان
+        onValue(ref(db, 'liveData/requests'), snap => {
+            const data = snap.val();
+            let guestName = null;
+            if(data) {
+                Object.values(data).forEach(req => {
+                    if(req.status === 'approved') {
+                        guestName = req.name;
+                    }
+                });
+            }
+            const titleEl = document.getElementById('liveRoomTitle');
+            if(titleEl) {
+                if(guestName) {
+                    titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> أبو فايز & ${guestName}`;
+                } else {
+                    titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> أبو فايز`;
+                }
+            }
+        });
 
     </script>
 </body>

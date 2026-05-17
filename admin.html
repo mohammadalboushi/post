@@ -565,7 +565,7 @@
 
         /* ==================== LOGIN STATE ==================== */
         #login-section {
-            display: none;
+            display: flex;
             position: fixed;
             inset: 0;
             background: var(--bg);
@@ -787,26 +787,37 @@
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
         .live-timer { font-size: 1.2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
         
-        .studio-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        /* ستايلات القائمة الجانبية والجرس الجديد */
+        .admin-menu-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; opacity: 0; transition: 0.3s; backdrop-filter: blur(2px); }
+        .admin-side-menu { position: absolute; top: 0; bottom: 0; left: -280px; width: 260px; background: var(--surface); z-index: 10002; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow-y: auto; }
+        .admin-side-menu.open { left: 0; }
+        .admin-menu-overlay.open { display: block; opacity: 1; }
+        .menu-item { padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-weight: 800; color: var(--ink); border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .menu-item:hover { background: var(--surface-2); color: var(--accent); padding-right: 15px; }
+        .menu-item.danger { color: var(--danger); }
+        .menu-item.danger:hover { background: var(--danger-bg); }
+        
+        .req-bell { position: relative; cursor: pointer; font-size: 1.3rem; color: var(--ink-muted); margin-right: 15px; transition: 0.2s; display: flex; align-items: center; }
+        .req-bell.active { color: var(--danger); animation: swing 0.8s ease infinite alternate; }
+        .req-bell .badge { position: absolute; top: -5px; right: -8px; background: var(--danger); color: white; font-size: 0.65rem; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; display: none; border: 2px solid var(--surface); }
+        .req-bell.active .badge { display: flex; }
+        @keyframes swing { 0% { transform: rotate(15deg); } 100% { transform: rotate(-15deg); } }
 
         .studio-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         
-        .visualizer-container { height: 80px; background: var(--surface-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-        canvas#audioVisualizer { width: 100%; height: 100%; }
-        
-        .interaction-panel { flex: 1; display: flex; flex-direction: column; background: var(--surface); }
-        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .interaction-panel { flex: 1; display: flex; flex-direction: column; background: var(--surface); overflow: hidden; min-height: 0; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--ink-muted); border-bottom: 2px solid transparent; transition: all 0.2s;}
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface-2); }
         .tab .badge { background: var(--danger); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; margin-right: 4px; display: none; }
         
-        .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
-        .tab-content.active { display: block; }
+        .tab-content { flex: 1; display: none; flex-direction: column; padding: 16px; overflow: hidden; min-height: 0; }
+        .tab-content.active { display: flex; }
         
-        .chat-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-        .chat-msg { background: var(--surface-2); padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+        .chat-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; flex: 1; overflow-y: auto; min-height: 0; padding-right: 5px; }
+        .chat-msg { background: var(--surface-2); padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; flex-shrink: 0; }
         .chat-msg span.name { font-weight: 700; color: var(--accent); margin-left: 6px; }
-        .chat-input-area { display: flex; gap: 8px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 16px; }
+        .chat-input-area { display: flex; gap: 8px; border-top: 1px solid var(--border); padding-top: 16px; flex-shrink: 0; }
 
         .request-item { background: var(--surface-2); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .request-actions { display: flex; gap: 6px; }
@@ -821,6 +832,9 @@
         .slider-group { margin-bottom: 16px; }
         .slider-group label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--ink-muted); margin-bottom: 8px; }
         .slider-group input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+        .fade-anim { animation: fade 2s infinite alternate; }
+        @keyframes fade { 0% {opacity:0.5;} 100% {opacity:1;} }
 
     </style>
 </head>
@@ -1007,55 +1021,78 @@
     </div>
 
     <div id="liveStudioModal">
-        <div class="studio-header">
+        <div class="admin-menu-overlay" id="adminMenuOverlay" onclick="closeAdminMenu()"></div>
+        <div class="admin-side-menu" id="adminSideMenu">
+            <div style="padding: 24px 20px; background: var(--surface-2); font-weight: 900; font-size: 1.2rem; border-bottom: 1px solid var(--border); color: var(--accent);"><i class="fas fa-podcast"></i> خيارات البث</div>
+            <div class="menu-item" onclick="openMediaSelector(); closeAdminMenu();"><i class="fab fa-youtube" style="color: #ef4444; width: 20px;"></i> مشاركة صوت/يوتيوب</div>
+            <div class="menu-item" onclick="document.getElementById('adminMixerModal').style.display='flex'; closeAdminMenu();"><i class="fas fa-sliders-h" style="color: var(--accent); width: 20px;"></i> مكسري</div>
+            <div class="menu-item" onclick="document.getElementById('guestMixerModal').style.display='flex'; closeAdminMenu();"><i class="fas fa-headphones" style="color: var(--warning); width: 20px;"></i> مكسر الضيف</div>
+            <div class="menu-item danger" id="menuStopMedia" style="display: none;" onclick="stopSharedMedia(); closeAdminMenu();"><i class="fas fa-stop-circle" style="width: 20px;"></i> إغلاق الموسيقى</div>
+            <div class="menu-item" onclick="clearChat(); closeAdminMenu();"><i class="fas fa-trash-alt" style="color: var(--ink-muted); width: 20px;"></i> حذف جميع الرسائل</div>
+            <div class="menu-item" onclick="closeStudioModalOnly(); closeAdminMenu();"><i class="fas fa-sign-out-alt" style="color: var(--ink-muted); width: 20px;"></i> مغادرتي دون إنهاء البث</div>
+            <div class="menu-item danger" onclick="stopLive(); closeAdminMenu();"><i class="fas fa-power-off" style="width: 20px;"></i> إنهاء هذا البث</div>
+        </div>
+
+        <div class="studio-header" style="flex-direction: row-reverse;">
+            <button class="btn btn-ghost" onclick="openAdminMenu()" style="font-size: 1.3rem; padding: 6px 12px; margin-right: auto; color: var(--ink);"><i class="fas fa-bars"></i></button>
+            
             <div class="studio-status">
                 <div class="live-dot" id="liveIndicator"></div>
-                <div class="live-timer" id="liveTimer">00:00</div>
-                <div style="color: var(--accent); font-weight: bold; font-size: 0.85rem;"><i class="fas fa-eye"></i> <span id="viewersCount">0</span></div>
+                <div class="live-timer" id="liveTimer" style="margin-left: 10px;">00:00</div>
+                <div style="color: var(--accent); font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 10px;" onclick="openViewersList()"><i class="fas fa-users"></i> <span id="viewersCount">0</span></div>
+                
+                <div class="req-bell" id="reqBellIcon" onclick="openRequestsModal()" title="طلبات المايك">
+                    <i class="fas fa-bell"></i>
+                    <div class="badge" id="reqBellBadge">0</div>
+                </div>
             </div>
             
-            <div class="studio-toolbar">
-                <button class="btn btn-ghost" style="background: var(--warning); color: #000; font-weight: 900;" onclick="openMediaSelector()">
-                    <i class="fas fa-music"></i> مشاركة صوت/يوتيوب
-                </button>
-                <button class="btn btn-ghost" onclick="document.getElementById('adminMixerModal').style.display='flex'">
-                    <i class="fas fa-sliders-h"></i> مكسري
-                </button>
-                <button class="btn btn-ghost" onclick="document.getElementById('guestMixerModal').style.display='flex'">
-                    <i class="fas fa-headphones"></i> مكسر الضيف
-                </button>
-                <button class="btn btn-primary" id="startLiveBtn"><i class="fas fa-play"></i> بدء البث</button>
-                <button class="btn btn-danger-soft" id="stopLiveBtn" style="display: none;"><i class="fas fa-stop"></i> إنهاء</button>
-                <button class="btn btn-ghost" id="closeStudioBtn"><i class="fas fa-times"></i> إغلاق</button>
-            </div>
+            <button class="btn btn-primary" id="startLiveBtn" style="margin-left: 10px;"><i class="fas fa-play"></i> بدء البث</button>
+            <button class="btn btn-danger-soft" id="stopLiveBtn" style="display: none; margin-left: 10px;"><i class="fas fa-stop"></i> إنهاء</button>
         </div>
 
         <div class="studio-body">
-            <div class="visualizer-container">
-                <canvas id="audioVisualizer" style="width: 100%; height: 100%;"></canvas>
+            
+            <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 30px;">
+                <div style="position: absolute; top: 5px; right: 10px; z-index: 10; color: #fff; font-size: 0.75rem; font-weight: bold;">المشغل المباشر</div>
+                <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
+                <div id="ytAudioPlaceholder" style="width:100%; height:100px; display:none; align-items:center; justify-content:center; color:var(--accent); font-size:2rem; background:#1a1714;"><i class="fas fa-music fade-anim"></i></div>
+                <div id="localPlayerWrapper" style="display:none; padding: 15px; background: var(--surface-2);">
+                    <audio id="localAudioPlayer" style="display:none;"></audio>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="localTimeCurrent" style="font-size:0.7rem; color:var(--ink-muted);">00:00</span>
+                        <input type="range" id="localAudioSeek" min="0" max="100" value="0" style="flex:1; accent-color: var(--accent);">
+                        <span id="localTimeTotal" style="font-size:0.7rem; color:var(--ink-muted);">00:00</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="interaction-panel">
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('chat')">الدردشة</div>
-                    <div class="tab" onclick="switchTab('requests')">الطلبات <span class="badge" id="reqBadge">0</span></div>
+            <div class="interaction-panel" style="padding: 15px;">
+                <div class="chat-messages" id="chatArea" style="padding-right: 0;">
+                    <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>
                 </div>
-                
-                <div class="tab-content active" id="tab-chat" style="display: flex; flex-direction: column;">
-                    <div class="chat-messages" id="chatArea" style="flex: 1; overflow-y: auto;">
-                        <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" class="search-input" placeholder="اكتب رسالة للمستمعين...">
-                        <button class="btn btn-primary" style="padding: 8px 12px;" onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
-                    </div>
+                <div class="chat-input-area" style="position:relative;">
+                    <input type="text" id="chatInput" class="search-input" placeholder="اكتب رسالة للمستمعين..." style="flex:1; border-radius: 50px;">
+                    <button class="btn btn-primary" style="padding: 8px 12px; border-radius: 50px; width: 45px; display: flex; justify-content: center;" onclick="sendAdminChat()"><i class="fas fa-paper-plane"></i></button>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="tab-content" id="tab-requests">
-                    <div id="requestsList">
-                        <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>
-                    </div>
-                </div>
+    <div id="requestsModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-microphone"></i> طلبات التحدث</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div id="requestsList" style="max-height: 300px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewersModal" class="mixer-modal">
+        <div class="mixer-box">
+            <h3><span><i class="fas fa-users"></i> قائمة المشاهدين</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
+            <div id="viewersModalList" style="max-height: 300px; overflow-y: auto;">
+                <div style="text-align:center; padding: 20px;">لا يوجد مشاهدين</div>
             </div>
         </div>
     </div>
@@ -1081,15 +1118,9 @@
         </div>
     </div>
 
-    <div id="adminSharedPlayer" style="display:none; background: #000; border-bottom: 1px solid var(--border); position: relative; margin-top: 10px; border-radius: 10px; overflow: hidden; margin-left: 20px; margin-right: 20px; padding-top: 30px;">
-        <div style="position: absolute; top: 5px; right: 10px; z-index: 10; color: #fff; font-size: 0.75rem; font-weight: bold;">المشغل المباشر</div>
-        <div id="ytAdminContainer" style="width:100%; height:200px; display:none;"></div>
-        <audio id="localAudioPlayer" style="display:none; width: 100%; outline: none; border-radius: 0; background: #f0ede8; height: 40px;" controls></audio>
-    </div>
-
     <div id="adminMixerModal" class="mixer-modal">
         <div class="mixer-box">
-            <h3><span><i class="fas fa-sliders-h"></i> إعداداتي (المدير)</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">&times;</button></h3>
+            <h3><span><i class="fas fa-sliders-h"></i> إعداداتي (المدير)</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
             <div class="slider-group">
                 <label><span>قوة صوتي (Mic)</span><span id="myVolVal">100%</span></label>
                 <input type="range" id="myVolSlider" min="0" max="150" value="100">
@@ -1123,7 +1154,7 @@
 
     <div id="guestMixerModal" class="mixer-modal">
         <div class="mixer-box">
-            <h3><span><i class="fas fa-headphones"></i> إعدادات الضيف</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">&times;</button></h3>
+            <h3><span><i class="fas fa-headphones"></i> إعدادات الضيف</span> <button class="close-mixer" onclick="this.closest('.mixer-modal').style.display='none'">×</button></h3>
             <div style="font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 15px; text-align: center;" id="coHostName">لا يوجد ضيف حالياً</div>
             
             <div class="slider-group">
@@ -1153,7 +1184,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, push, update, remove, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
        
         const firebaseConfig = {
             apiKey: "AIzaSyBB_U4C880PW4GxZd8FALv8yBSiP2mNeBY",
@@ -1210,14 +1241,35 @@
                 document.getElementById('userName').textContent = user.displayName || 'المدير';
                 const initial = (user.displayName || 'A')[0];
                 document.getElementById('userAvatar').textContent = initial;
+                
+                // مسح الدردشة القديمة عند دخول المدير
+                remove(ref(db, 'liveData/chat'));
+                
                 loadPosts();
+
+                setTimeout(() => {
+                    if(sessionStorage.getItem('autoRejoinAdminLive') === 'true') {
+                        sessionStorage.removeItem('autoRejoinAdminLive');
+                        document.getElementById('startLiveBtn').click();
+                        document.getElementById('liveStudioModal').style.display = 'flex';
+                    }
+                }, 1000);
             } else {
                 document.getElementById('login-section').style.display = 'flex';
                 document.getElementById('app-shell').style.display = 'none';
             }
         });
 
-        document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('loginBtn').onclick = () => {
+            const btn = document.getElementById('loginBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل لجوجل...';
+            
+            // استخدام التحويل المباشر اللي بيشتغل حصراً على الجوالات
+            signInWithRedirect(auth, provider).catch(error => {
+                alert("صار خطأ بتسجيل الدخول: " + error.message);
+                btn.innerHTML = 'متابعة مع Google';
+            });
+        };
         document.getElementById('logoutBtn').onclick = () => signOut(auth);
         document.getElementById('logoutTopBtn').onclick = () => signOut(auth);
 
@@ -1283,7 +1335,7 @@
             });
         }
 
-                function renderList(posts) {
+        function renderList(posts) {
             const list = document.getElementById('postsList');
             list.innerHTML = '';
 
@@ -1366,12 +1418,12 @@
 
         // --- دوال الصدى والتسجيل ---
         function generateReverb(ctx) {
-            const length = ctx.sampleRate * 3.5; // طول صدى أكبر (3.5 ثواني)
+            const length = ctx.sampleRate * 3.5; 
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
             const left = impulse.getChannelData(0);
             const right = impulse.getChannelData(1);
             for (let i = 0; i < length; i++) {
-                const decay = Math.pow(1 - i / length, 1.5); // انحدار أبطأ ليعطي قوة وعمق أكبر
+                const decay = Math.pow(1 - i / length, 1.5); 
                 left[i] = (Math.random() * 2 - 1) * decay;
                 right[i] = (Math.random() * 2 - 1) * decay;
             }
@@ -1716,8 +1768,6 @@
         let guestDryGain;
         let guestMasterGain;
         
-        let liveAnalyser;
-
         const studioModal = document.getElementById('liveStudioModal');
         
         if(document.getElementById('openStudioBtn')) {
@@ -1746,18 +1796,51 @@
             }
         };
 
-        window.switchTab = (tab) => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.add('active');
+        // دوال القائمة الجانبية والرجوع والتحديث
+        window.openAdminMenu = () => {
+            document.getElementById('adminMenuOverlay').classList.add('open');
+            document.getElementById('adminSideMenu').classList.add('open');
+            history.pushState({menu: 'open'}, null, location.href);
         };
+        window.closeAdminMenu = () => {
+            document.getElementById('adminMenuOverlay').classList.remove('open');
+            document.getElementById('adminSideMenu').classList.remove('open');
+        };
+        window.openRequestsModal = () => document.getElementById('requestsModal').style.display = 'flex';
+        
+        window.closeStudioModalOnly = () => {
+            document.getElementById('liveStudioModal').style.display = 'none';
+            document.body.classList.remove('studio-open');
+        };
+
+        window.onpopstate = function (e) {
+            if (document.getElementById('adminSideMenu').classList.contains('open')) {
+                closeAdminMenu();
+                history.pushState(null, null, location.href);
+            } else if (document.getElementById('liveStudioModal').style.display === 'flex') {
+                closeStudioModalOnly();
+                history.pushState(null, null, location.href);
+            }
+        };
+
+        // استعادة البث بعد تحديث الصفحة (Refresh)
+        window.addEventListener('beforeunload', () => {
+            if(isLive) sessionStorage.setItem('autoRejoinAdminLive', 'true');
+        });
+
+        // زر إغلاق الموسيقى برمجياً
+        function updateMediaMenuButton(isPlaying) {
+            document.getElementById('menuStopMedia').style.display = isPlaying ? 'flex' : 'none';
+        }
 
         // بدء البث وتجهيز المكسرات
         if(document.getElementById('startLiveBtn')) {
             document.getElementById('startLiveBtn').onclick = async () => {
                 try {
                     document.getElementById('startLiveBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاتصال...';
+                    
+                    // مسح الدردشة مع كل بث جديد
+                    remove(ref(db, 'liveData/chat'));
                     
                     rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                     await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, "admin_uid");
@@ -1791,7 +1874,6 @@
                             if(data[i] > maxVol) maxVol = data[i];
                         }
                         
-                        // عتبة الفلتر: هلق السلايدر بيشتغل صح وبيخنق الأصوات البعيدة
                         let threshold = (parseInt(document.getElementById('noiseSlider').value) / 100) * 200;
 
                         if (maxVol >= threshold) {
@@ -1801,7 +1883,6 @@
                         }
                     };
                     checkAdminGate();
-
 
                     liveReverbNode = liveAudioCtx.createConvolver();
                     liveReverbNode.buffer = generateReverb(liveAudioCtx);
@@ -1851,7 +1932,6 @@
                         } catch(err) {}
                     }
 
-
                     // 4. تسليم الصوت لـ Agora
                     localCustomTrack = AgoraRTC.createCustomAudioTrack({
                         mediaStreamTrack: liveDest.stream.getAudioTracks()[0],
@@ -1870,7 +1950,6 @@
                     });
 
                     startTimer();
-                    setupVisualizer();
 
                     // 5. استقبال الضيف ودمجه بالمكسر الثاني
                     rtcClient.on("user-published", async (user, mediaType) => {
@@ -1883,7 +1962,7 @@
                             guestAnalyser.fftSize = 256;
                             guestSourceNode.connect(guestAnalyser);
 
-                                                        guestNoiseFilter = liveAudioCtx.createGain(); 
+                            guestNoiseFilter = liveAudioCtx.createGain(); 
                             let checkGuestGate = () => {
                                 requestAnimationFrame(checkGuestGate);
                                 const data = new Uint8Array(guestAnalyser.frequencyBinCount);
@@ -1904,12 +1983,11 @@
                             };
                             checkGuestGate();
 
-
                             guestReverbNode = liveAudioCtx.createConvolver(); 
                             guestReverbNode.buffer = generateReverb(liveAudioCtx);
 
                             guestWetGain = liveAudioCtx.createGain(); 
-                            guestWetGain.gain.value = (document.getElementById('guestRevSlider').value / 100) * 3; // قوة صدى مضروبة بـ 3 للضيف
+                            guestWetGain.gain.value = (document.getElementById('guestRevSlider').value / 100) * 3;
 
                             guestDryGain = liveAudioCtx.createGain(); 
                             guestDryGain.gain.value = 1;
@@ -1926,11 +2004,9 @@
                             guestDryGain.connect(guestMasterGain); 
                             guestWetGain.connect(guestMasterGain);
                             
-                            // بث الضيف للأدمن ليسمعه، ولـ liveDest ليسمعه الجمهور مدموجاً
                             guestMasterGain.connect(liveAudioCtx.destination); 
                             guestMasterGain.connect(liveDest);
 
-                            // ربط سلايدرات الضيف ديناميكياً
                             document.getElementById('guestVolSlider').oninput = e => { 
                                 document.getElementById('guestVolVal').innerText=e.target.value+'%'; 
                                 guestMasterGain.gain.value = e.target.value/100; 
@@ -1940,7 +2016,7 @@
                             };
                             document.getElementById('guestRevSlider').oninput = e => { 
                                 document.getElementById('guestRevVal').innerText=e.target.value+'%'; 
-                                guestWetGain.gain.value = (e.target.value/100) * 3; // مضاعفة القوة بـ 3
+                                guestWetGain.gain.value = (e.target.value/100) * 3; 
                             };
                             
                             const muteBtn = document.getElementById('muteGuestBtn');
@@ -2006,17 +2082,14 @@
                 const val = parseInt(e.target.value);
                 document.getElementById('mediaVolVal').innerText = val + '%';
                 
-                // 1. التحكم بملف الصوت عبر فلتر البث (عشان يتوطى عند الزوار)
                 if (window.liveMediaGain) {
                     window.liveMediaGain.gain.value = val / 100;
                 }
                 
-                // 2. التحكم باليوتيوب عندك كمدير
                 if(typeof ytPlayerAdmin !== 'undefined' && ytPlayerAdmin && ytPlayerAdmin.setVolume) {
                     try { ytPlayerAdmin.setVolume(val); } catch(err){}
                 }
                 
-                // 3. إرسال الحجم لقاعدة البيانات ليتحكم بيوتيوب الزوار
                 if(isLive) {
                     update(ref(db, 'liveData/media'), { volume: val });
                 }
@@ -2033,7 +2106,7 @@
             document.getElementById('myRevSlider').oninput = (e) => {
                 const val = e.target.value;
                 document.getElementById('myRevVal').innerText = val + '%';
-                if(liveWetGain) liveWetGain.gain.value = (val / 100) * 3; // مضاعفة القوة بـ 3
+                if(liveWetGain) liveWetGain.gain.value = (val / 100) * 3;
             };
         }
 
@@ -2043,37 +2116,6 @@
                 document.getElementById('monitorVal').innerText = val + '%';
                 if(liveMonitorGain) liveMonitorGain.gain.value = val / 100;
             };
-        }
-
-        function setupVisualizer() {
-            const canvas = document.getElementById("audioVisualizer");
-            const ctx = canvas.getContext("2d");
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-
-            liveAnalyser = liveAudioCtx.createAnalyser();
-            liveAnalyser.fftSize = 256;
-            liveMasterGain.connect(liveAnalyser);
-
-            function draw() {
-                if(!isLive) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    return;
-                }
-                requestAnimationFrame(draw);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                const dataArray = new Uint8Array(liveAnalyser.frequencyBinCount);
-                liveAnalyser.getByteFrequencyData(dataArray);
-                let sum = 0;
-                for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
-                let vol = sum / dataArray.length; 
-                
-                ctx.fillStyle = vol > 100 ? "var(--danger)" : "var(--accent)";
-                let barHeight = Math.max(10, vol * 1.5);
-                ctx.fillRect(canvas.width/2 - 20, canvas.height/2 - barHeight/2, 40, barHeight);
-            }
-            draw();
         }
         
         // ==========================================
@@ -2090,6 +2132,13 @@
                 timestamp: Date.now()
             });
             input.value = '';
+        };
+
+        window.clearChat = () => {
+            if(confirm("هل أنت متأكد من مسح الدردشة نهائياً للكل؟")) {
+                remove(ref(db, 'liveData/chat'));
+                showToast("تم مسح المحادثات");
+            }
         };
 
         onValue(ref(db, 'liveData/chat'), (snap) => {
@@ -2113,17 +2162,54 @@
             }
         });
 
-        onValue(ref(db, 'liveData/requests'), (snap) => {
+        // دوال قائمة المشاهدين
+        window.openViewersList = () => {
+            document.getElementById('viewersModal').style.display = 'flex';
+        };
+
+        window.kickViewer = (uid) => {
+            set(ref(db, `liveData/kicked/${uid}`), Date.now()); // لإعطاء أمر الطرد للزائر
+            remove(ref(db, `liveData/viewers/${uid}`));
+            remove(ref(db, `liveData/requests/${uid}`));
+            showToast("تم طرد المشاهد بنجاح");
+        };
+
+        onValue(ref(db, 'liveData/viewers'), (snap) => {
+            const data = snap.val();
+            const countSpan = document.getElementById('viewersCount');
+            const vList = document.getElementById('viewersModalList');
+            
+            if(countSpan) countSpan.innerText = data ? Object.keys(data).length : '0';
+            
+            if(vList) {
+                vList.innerHTML = '';
+                if(data) {
+                    Object.entries(data).forEach(([uid, v]) => {
+                        vList.innerHTML += `
+                            <div class="request-item">
+                                <span style="font-weight: bold; font-size: 0.9rem;"><i class="fas fa-headphones" style="color:var(--ink-muted); margin-left:5px;"></i> ${v.name}</span>
+                                <button class="btn btn-danger-soft" style="padding: 4px 10px; font-size: 0.75rem;" onclick="kickViewer('${uid}')"><i class="fas fa-ban"></i> طرد</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    vList.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--ink-faint);">لا يوجد مشاهدين حالياً</div>';
+                }
+            }
+        });
+
+                onValue(ref(db, 'liveData/requests'), (snap) => {
             const data = snap.val();
             const reqList = document.getElementById('requestsList');
-            const reqBadge = document.getElementById('reqBadge');
+            const reqBell = document.getElementById('reqBellIcon');
+            const reqBadge = document.getElementById('reqBellBadge');
             if(!reqList) return;
             reqList.innerHTML = '';
             
             let hasApproved = false;
+            let pendingCount = 0;
 
             if(data) {
-                let pendingCount = 0;
                 Object.entries(data).forEach(([uid, req]) => {
                     if(req.status === 'pending') {
                         pendingCount++;
@@ -2138,7 +2224,6 @@
                         `;
                     } else if (req.status === 'approved') {
                         hasApproved = true;
-                        // نظهر الضيف الحالي بقائمة الطلبات مع زر إنزال مباشر
                         reqList.innerHTML += `
                             <div class="request-item" style="border-right: 3px solid var(--success); background: var(--success-bg);">
                                 <span style="font-size: 0.85rem; font-weight: 700; color: var(--success);"><i class="fas fa-headset"></i> ${req.name} (على الهواء)</span>
@@ -2147,32 +2232,30 @@
                                 </div>
                             </div>
                         `;
-                        // تحديث اسمه بنافذة مكسر الضيف كمان
                         document.getElementById('coHostName').innerText = req.name;
                         const dropBtn = document.getElementById('kickGuestBtn');
                         if(dropBtn) dropBtn.onclick = () => removeGuest(uid);
                     }
                 });
-                
-                if(pendingCount > 0) {
-                    reqBadge.style.display = 'inline-block';
-                    reqBadge.innerText = pendingCount;
-                } else {
-                    reqBadge.style.display = 'none';
-                    if(!hasApproved) {
-                        reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
-                    }
-                }
+            }
+
+            // تحديث الجرس
+            if(pendingCount > 0) {
+                reqBell.classList.add('active');
+                reqBadge.innerText = pendingCount;
             } else {
-                reqBadge.style.display = 'none';
+                reqBell.classList.remove('active');
+            }
+
+            if(pendingCount === 0 && !hasApproved) {
                 reqList.innerHTML = '<div style="text-align: center; color: var(--ink-faint); font-size: 0.8rem; margin-top: 20px;">لا يوجد طلبات صعود حالياً.</div>';
             }
 
-            // تصفير اسم الضيف إذا مافي حدا
             if(!hasApproved) {
                 document.getElementById('coHostName').innerText = "لا يوجد ضيف حالياً";
             }
         });
+
 
         window.acceptGuest = (uid, name) => {
             update(ref(db, `liveData/requests/${uid}`), { status: 'approved' });
@@ -2188,20 +2271,13 @@
             showToast("تم إنزال الضيف");
         };
 
-        onValue(ref(db, 'liveData/viewers'), (snap) => {
-            const data = snap.val();
-            const countSpan = document.getElementById('viewersCount');
-            if(countSpan) {
-                countSpan.innerText = data ? Object.keys(data).length : '0';
-            }
-        });
-
-        // دوال ميزة اليوتيوب والميديا
+        // ==========================================
+        // دوال ميزة اليوتيوب والميديا المحلية
+        // ==========================================
         window.openMediaSelector = () => {
             document.getElementById('mediaSelectorModal').style.display = 'flex';
         };
 
-        // استدعاء مكتبة يوتيوب
         const ytTag = document.createElement('script');
         ytTag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -2226,35 +2302,6 @@
             }
         }
 
-        window.startSharedMedia = (type, display) => {
-            if(!isLive) return showToast("يجب بدء البث أولاً!", "error");
-            document.getElementById('mediaSelectorModal').style.display = 'none';
-            
-            const rawUrl = document.getElementById('ytLinkInput').value;
-            const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/);
-            if(!match) return showToast("رابط يوتيوب غير صالح", "error");
-            
-            const url = match[1];
-            document.getElementById('adminSharedPlayer').style.display = 'block';
-            
-            if(ytPlayerAdmin && ytPlayerAdmin.loadVideoById) {
-                ytPlayerAdmin.loadVideoById(url);
-            }
-
-            const currentVol = parseInt(document.getElementById('mediaVolSlider').value || 50);
-            if(ytPlayerAdmin && ytPlayerAdmin.setVolume) ytPlayerAdmin.setVolume(currentVol);
-
-            // رفع حالة الميديا لقاعدة البيانات ليلقطوها الزوار مع حجم الصوت الحالي
-            set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, volume: currentVol, ts: Date.now() });
-            
-            // مزامنة مستمرة للوقت مشان ما يفصلوا الزوار
-            syncInterval = setInterval(() => {
-                if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState() === YT.PlayerState.PLAYING) {
-                    update(ref(db, 'liveData/media'), { time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
-                }
-            }, 3000);
-        };
-
         window.stopSharedMedia = () => {
             document.getElementById('adminSharedPlayer').style.display = 'none';
             if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
@@ -2267,11 +2314,12 @@
             }
             clearInterval(syncInterval);
             remove(ref(db, 'liveData/media')); 
+            updateMediaMenuButton(false); // لإخفاء زر إغلاق الموسيقى من القائمة الجانبية
         };
 
         window.toggleSharedMediaPlay = () => {
             const localPlayer = document.getElementById('localAudioPlayer');
-            if (localPlayer && localPlayer.style.display === 'block') {
+            if (document.getElementById('localPlayerWrapper').style.display === 'block') {
                 if (localPlayer.paused) localPlayer.play();
                 else localPlayer.pause();
             } else if (ytPlayerAdmin && ytPlayerAdmin.getPlayerState) {
@@ -2281,7 +2329,7 @@
             }
         };
 
-        window.startSharedMedia = (type, display) => {
+                window.startSharedMedia = (type, display) => {
             if(!isLive) return showToast("يجب بدء البث أولاً!", "error");
             document.getElementById('mediaSelectorModal').style.display = 'none';
             
@@ -2291,11 +2339,19 @@
             
             const url = match[1];
             document.getElementById('adminSharedPlayer').style.display = 'block';
-            document.getElementById('ytAdminContainer').style.display = 'block';
+            document.getElementById('localPlayerWrapper').style.display = 'none';
+            
+            // إخفاء الفيديو بحال كصوت فقط
+            if(display === 'audio') {
+                document.getElementById('ytAdminContainer').style.display = 'none';
+                document.getElementById('ytAudioPlaceholder').style.display = 'flex';
+            } else {
+                document.getElementById('ytAdminContainer').style.display = 'block';
+                document.getElementById('ytAudioPlaceholder').style.display = 'none';
+            }
             
             const localPlayer = document.getElementById('localAudioPlayer');
             if(localPlayer) {
-                localPlayer.style.display = 'none';
                 localPlayer.pause();
             }
             
@@ -2309,7 +2365,7 @@
             }
 
             set(ref(db, 'liveData/media'), { type: 'youtube', url: url, display: display, state: 'playing', time: 0, volume: currentVol, ts: Date.now() });
-            
+            updateMediaMenuButton(true);            
             syncInterval = setInterval(() => {
                 if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState && ytPlayerAdmin.getPlayerState() === YT.PlayerState.PLAYING) {
                     update(ref(db, 'liveData/media'), { time: ytPlayerAdmin.getCurrentTime(), ts: Date.now() });
@@ -2317,23 +2373,50 @@
             }, 3000);
         };
 
+        // شريط وتوقيت ملف الصوت المحلي
+        const localPlayer = document.getElementById('localAudioPlayer');
+        const localSeek = document.getElementById('localAudioSeek');
+        const curTimeTxt = document.getElementById('localTimeCurrent');
+        const totTimeTxt = document.getElementById('localTimeTotal');
+
+        localPlayer.addEventListener('timeupdate', () => {
+            if(!localPlayer.duration) return;
+            const cur = localPlayer.currentTime;
+            const tot = localPlayer.duration;
+            localSeek.value = (cur / tot) * 100;
+            
+            let cm = Math.floor(cur / 60).toString().padStart(2, '0');
+            let cs = Math.floor(cur % 60).toString().padStart(2, '0');
+            let tm = Math.floor(tot / 60).toString().padStart(2, '0');
+            let ts = Math.floor(tot % 60).toString().padStart(2, '0');
+            
+            curTimeTxt.innerText = `${cm}:${cs}`;
+            totTimeTxt.innerText = `${tm}:${ts}`;
+        });
+
+        localSeek.addEventListener('input', (e) => {
+            if(!localPlayer.duration) return;
+            localPlayer.currentTime = (e.target.value / 100) * localPlayer.duration;
+        });
+
         document.getElementById('localAudioInput').onchange = function(e) {
             const file = e.target.files[0];
             if(file) {
                 document.getElementById('mediaSelectorModal').style.display = 'none';
                 document.getElementById('adminSharedPlayer').style.display = 'block';
                 document.getElementById('ytAdminContainer').style.display = 'none';
+                document.getElementById('ytAudioPlaceholder').style.display = 'none';
+                document.getElementById('localPlayerWrapper').style.display = 'block';
                 
                 if(ytPlayerAdmin && ytPlayerAdmin.stopVideo) {
                     try { ytPlayerAdmin.stopVideo(); } catch(err){}
                 }
                 clearInterval(syncInterval);
                 remove(ref(db, 'liveData/media')); 
+            updateMediaMenuButton(false);
 
-                const player = document.getElementById('localAudioPlayer');
-                player.src = URL.createObjectURL(file);
-                player.style.display = 'block';
-                player.play();
+                localPlayer.src = URL.createObjectURL(file);
+                localPlayer.play();
                 
                 if(!isLive) {
                     showToast("تنبيه: لتسمع الأغنية مع الزوار، ابدأ البث أولاً!", "error");
@@ -2346,3 +2429,4 @@
 <script>eruda.init();</script>
 </body>
 </html>
+
