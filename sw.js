@@ -1,14 +1,17 @@
-const CACHE_NAME = 'admin-cache-v64';
+const CACHE_NAME = 'visitor-cache-v1';
 
+// قائمة الملفات اللي رح تتخزن بتطبيق الزوار
 const urlsToCache = [
-  './admin.html',
+  './index.html',
+  './style.css',
+  './main.js',
+  './manifest.json',
   './icon-192.png',
-  './icon-512.png',
-  './manifest.json'
+  './icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); 
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
@@ -21,6 +24,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
+          // مسح أي كاش قديم للزوار لحتى ياخدوا التحديث الجديد
           if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
