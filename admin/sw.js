@@ -1,4 +1,4 @@
-const CACHE_NAME = 'admin-cache-v66';
+const CACHE_NAME = 'admin-cache-v71';
 
 // تم تحديث قائمة الملفات لتشمل التقسيم الجديد
 const urlsToCache = [

@@ -371,7 +371,17 @@
         <span id="toastMsg"></span>
     </div>
 
-    <script type="module" src="admin.js"></script>
+    <script>
+        fetch('admin.js?v=' + new Date().getTime()) // سحب الملف (مع كسر الكاش تلقائياً)
+        .then(response => response.text())
+        .then(code => {
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = code; // حقن الكود بالصفحة لتجاوز حظر السيرفر المحلي
+            document.body.appendChild(script);
+        })
+        .catch(err => alert('صار خطأ بتحميل ملف البرمجة: ' + err));
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>eruda.init();</script>
