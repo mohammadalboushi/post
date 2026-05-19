@@ -21,7 +21,17 @@ document.addEventListener('ended', e => { if(e.target.tagName === 'AUDIO') { isA
 let allFetchedPosts = [];
 onValue(ref(db, 'posts'), snap => {
     const data = snap.val();
-    if(data) allFetchedPosts = Object.entries(data).map(([k,v])=>({id:k,...v})).sort((a,b)=>(a.order||0)-(b.order||0));
+    if(data) {
+        allFetchedPosts = Object.entries(data)
+            .map(([k,v]) => ({id:k, ...v}))
+            .filter(post => !post.isHidden) // فلترة المنشورات المخفية
+            .sort((a, b) => {
+                if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1; // إعطاء أولوية التثبيت
+                return (a.order || 0) - (b.order || 0); // ترتيب حسب التاريخ
+            });
+    } else {
+        allFetchedPosts = [];
+    }
     renderPosts(document.getElementById('searchInput').value);
 });
 
@@ -46,7 +56,7 @@ function renderPosts(query = '') {
                         ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i> نسخ النص</button>` : ''}
                     </div>
                 </div>
-                ${post.title ? `<div class="post-title">${post.title}</div>` : ''}
+                ${post.title ? `<div class="post-title">${post.isPinned ? '<i class="fas fa-thumbtack" style="color:var(--pinned); margin-left:6px; font-size:0.9rem;"></i>' : ''}${post.title}</div>` : ''}
                 ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ''}
                 ${post.audioUrl ? `<div onclick="event.stopPropagation()"><audio controls src="${post.audioUrl}" onplay="incrementPlayCount('${post.id}', event)" style="width:100%; outline:none; margin-bottom:15px;"></audio></div>` : ''}
                 <div class="post-content">${post.content}</div>
