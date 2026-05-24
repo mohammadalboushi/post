@@ -57,6 +57,7 @@ onAuthStateChanged(auth, (user) => {
         const initial = (user.displayName || 'A')[0];
         document.getElementById('userAvatar').textContent = initial;
         
+        // رادار مراقبة الخروج من جميع الجلسات
         onValue(ref(db, 'adminSettings/forceLogout'), (snap) => {
             const logoutTime = snap.val();
             if (logoutTime && logoutTime > window.sessionInitTime) {
@@ -80,9 +81,11 @@ onAuthStateChanged(auth, (user) => {
                     if(typeof liveAudioCtx !== 'undefined' && liveAudioCtx.state === 'suspended') liveAudioCtx.resume();
                 }, { once: true });
                 
+                // استعادة الميديا بنفس التوقيت المباشر (بدون تصفير)
                 get(ref(db, 'liveData/media')).then(snap => {
                     const media = snap.val();
                     if(media) {
+                        // حساب الوقت المتوقع بناءً على الوقت اللي مرق
                         let expectedTime = media.time;
                         if(media.state === 'playing') {
                             expectedTime += ((Date.now() - media.ts) / 1000);
@@ -113,6 +116,7 @@ onAuthStateChanged(auth, (user) => {
                                 }
                                 updateMediaMenuButton(true);
                                 
+                                // إعادة تفعيل المزامنة للمدير لحاله
                                 clearInterval(syncInterval);
                                 syncInterval = setInterval(() => {
                                     if(ytPlayerAdmin && ytPlayerAdmin.getPlayerState && ytPlayerAdmin.getPlayerState() === 1) {
@@ -137,10 +141,11 @@ onAuthStateChanged(auth, (user) => {
                             const localPlayer = document.getElementById('localAudioPlayer');
                             localPlayer.src = media.url;
                             localPlayer.muted = false;
-                            localPlayer.currentTime = expectedTime;
+                            localPlayer.currentTime = expectedTime; // القفز للوقت الحالي اللي واصلين له المستمعين
                             if(media.state === 'playing') localPlayer.play();
                             updateMediaMenuButton(true);
                             
+                            // إعادة تفعيل مزامنة الميديا المحلية
                             clearInterval(syncInterval);
                             if(media.display === 'video' || media.display === 'audio') {
                                 syncInterval = setInterval(() => {
@@ -164,9 +169,9 @@ onAuthStateChanged(auth, (user) => {
 
 document.getElementById('loginBtn').onclick = () => {
     const btn = document.getElementById('loginBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل لجوجل...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فتح نافذة جوجل...';
     
-    signInWithRedirect(auth, provider).catch(error => {
+    signInWithPopup(auth, provider).catch(error => {
         alert("صار خطأ بتسجيل الدخول: " + error.message);
         btn.innerHTML = 'متابعة مع Google';
     });
@@ -846,6 +851,7 @@ window.onpopstate = function (e) {
     }
 };
 
+// استعادة البث بعد تحديث الصفحة (Refresh) وإرسال إشعار المغادرة
 window.addEventListener('beforeunload', () => {
     if(isLive) {
         sessionStorage.setItem('autoRejoinAdminLive', 'true');
@@ -937,6 +943,7 @@ if(document.getElementById('startLiveBtn')) {
             document.getElementById('liveIndicator').style.display = 'block';
             document.getElementById('quickToolsRow').style.display = 'flex';
             
+            // استكمال العداد عند التحديث
             if(window.isRejoining) {
                 get(ref(db, 'liveData/status/startedAt')).then(snap => {
                     const oldStart = snap.val();
@@ -1339,4 +1346,3 @@ document.getElementById('localAudioInput').onchange = async function(e) {
         localPlayer.onplay = () => { if(fileType === 'video' && isLive) update(ref(db, 'liveData/media'), { state: 'playing', time: localPlayer.currentTime, ts: Date.now() }); };
     }
 };
-
