@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Al-Boushi</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f7f6f2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style id="neon-live-theme">
+        /* ألوان وخلفية النافذة الأساسية */
+        .modal-overlay .live-interaction-box {
+            background: #090a0f !important; /* أسود فضائي عميق */
+            border: 1px solid rgba(0, 212, 255, 0.3) !important;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.15), inset 0 0 20px rgba(0,0,0,0.8) !important;
+        }
+        
+        .live-modal-header {
+            background: rgba(9, 10, 15, 0.95) !important;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+        
+        /* تلوين نيون للنصوص والأيقونات بالهيدر */
+        #liveRoomTitle {
+            color: #fff !important;
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.8);
+            letter-spacing: 0.5px;
+        }
+        #liveRoomTitle i { color: #ff0055 !important; }
+        
+        #visitorTimer, #visitorViewersCount, #visitorViewersCount i {
+            color: #00d4ff !important;
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+        }
+
+        #floatingMicBtn {
+            background: rgba(0, 212, 255, 0.1) !important;
+            border: 1px solid rgba(0, 212, 255, 0.4) !important;
+            color: #00d4ff !important;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+            transition: 0.3s;
+        }
+        #floatingMicBtn:hover {
+            background: rgba(0, 212, 255, 0.2) !important;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        /* حاوية الميديا ثابتة ولا تتأثر بالدردشة (الحل الجذري لليوتيوب) */
+        #visitorMediaContainer {
+            flex-shrink: 0 !important; /* يمنع انكماش اليوتيوب */
+            z-index: 5;
+            position: relative;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* خلفية الفضاء المتحركة ببطء شديد (أداء متوازن) */
+        .space-bg {
+            position: absolute; inset: 0; z-index: 0;
+            background-color: #090a0f;
+            background-image: 
+                radial-gradient(1.5px 1.5px at 10% 10%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 20% 30%, #00d4ff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 40% 70%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2.5px 2.5px at 60% 20%, #ff0055, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 80% 80%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90% 40%, #00d4ff, rgba(0,0,0,0));
+            background-size: 150px 150px;
+            /* تم إعادة الحركة ولكن بسرعة بطيئة جداً (180 ثانية) بدلاً من 25 للحفاظ على السلاسة */
+            animation: spaceScrollSlow 120s linear infinite;
+            opacity: 0.7;
+            pointer-events: none;
+            transform: translateZ(0); /* تسريع عبر كرت الشاشة للخلفية أيضاً */
+        }
+        
+        /* تأثير التمرير الفضائي البطيء */
+        @keyframes spaceScrollSlow {
+            from { background-position: 0 0; }
+            to { background-position: 0 300px; }
+        }
+
+        /* تحسين أداء وتمرير الدردشة */
+        .chat-list {
+            z-index: 2;
+            position: relative;
+            scroll-behavior: smooth;
+            will-change: transform;
+            overscroll-behavior: contain;
+            transform: translateZ(0); /* تسريع عبر كرت الشاشة لتجنب اللاغ */
+            padding-bottom: 10px;
+        }
+        
+        .chat-bubble {
+            background: rgba(20, 22, 30, 0.85) !important; /* شفافية بدون backdrop-filter للحفاظ على سرعة التمرير */
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #eee !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        .chat-text { color: #f0f0f0 !important; }
+        
+        .chat-bubble.mine {
+            background: rgba(0, 212, 255, 0.15) !important;
+            border-color: rgba(0, 212, 255, 0.3) !important;
+        }
+        .chat-bubble.mine .chat-text { color: #fff !important; }
+
+        /* ألوان المدير (النيون الزهري/الأحمر الواضح) */
+        .chat-bubble .chat-sender[style*="color: var(--danger)"] {
+            color: #ff0055 !important;
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.6);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        .chat-bubble .chat-text[style*="color: var(--danger)"] {
+            color: #ffb3c6 !important; /* زهري فاتح ومقروء جداً بدال الأسود */
+            font-weight: 800 !important;
+        }
+
+        /* ألوان النظام (النيون الأخضر الساطع) */
+        .system-bubble {
+            background: rgba(0, 255, 128, 0.1) !important;
+            border: 1px dashed rgba(0, 255, 128, 0.3) !important;
+        }
+        .system-bubble .chat-sender { color: #00ff80 !important; text-shadow: 0 0 5px rgba(0,255,128,0.5); }
+        .system-bubble .chat-text { color: #e6ffec !important; font-weight: bold !important; }
+
+        /* حقل الإدخال وزر الإرسال */
+        .chat-input-row {
+            background: rgba(9, 10, 15, 0.95) !important;
+            border-top: 1px solid rgba(0, 212, 255, 0.2) !important;
+            z-index: 5;
+            position: relative;
+        }
+        .chat-input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(0, 212, 255, 0.3) !important;
+            color: #fff !important;
+        }
+        .chat-input:focus {
+            border-color: #00d4ff !important;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2) !important;
+        }
+        .chat-send-btn {
+            background: linear-gradient(135deg, #00d4ff, #ff0055) !important;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            border: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-inner">
+            <a onclick="window.goHome(event)" class="wordmark">
+                <div class="wordmark-dot"></div>
+                <span dir="ltr"><span class="brand-m">M-</span>Al-Boushi</span>
+            </a>
+            
+            <div class="header-controls">
+                <div id="headerLiveControls" style="display: none; align-items: center; gap: 8px;">
+                    <button id="btnHeaderJoin" class="header-live-btn" onclick="joinBroadcast()">
+                        <span class="live-pulse-dot"></span> مباشر
+                    </button>
+                    <div id="headerListeningControls" style="display: none; align-items: center; gap: 6px;">
+                        <button class="header-live-btn active" onclick="openLiveInteraction()">
+                            <i class="fas fa-comments"></i> تفاعل
+                        </button>
+                        <button class="icon-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); width: 32px; height: 32px;" onclick="promptLeaveBroadcast()" title="خروج من البث">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="themeToggleBtn" class="icon-btn" title="الوضع الليلي/النهاري" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="post-count-badge" id="postCountBadge">جاري التحميل...</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero" id="heroSection">
+        <div class="hero-label"><i class="fas fa-bolt" style="font-size:0.7rem;"></i> آخر المنشورات</div>
+        <h1>الأخبار<br><em>والمقالات</em></h1>
+        <p class="hero-sub">كل ما يستحق القراءة، في مكان واحد.</p>
+        
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن كلمة بالمنشورات...">
+        </div>
+    </div>
+
+    <div id="posts-container">
+        <div class="loading-feed" id="feedContainer">
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="width:30%; height:10px; margin-bottom:20px;"></div>
+                <div class="skeleton-line" style="width:70%; height:18px;"></div>
+                <div class="skeleton-line" style="width:55%; height:18px;"></div>
+                <div class="skeleton-line" style="width:90%; height:12px; margin-top:8px;"></div>
+                <div class="skeleton-line" style="width:75%; height:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="liveInteractionModal" class="modal-overlay">
+        <div class="live-interaction-box">
+            
+            <div class="live-modal-header" style="display:flex; flex-direction:column; gap:5px; padding: 10px 15px; flex-shrink: 0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="font-size: 0.95rem; font-weight: 900; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 6px;" id="liveRoomTitle">
+                            <i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> أبو فايز
+                        </h3>
+                        <button id="floatingMicBtn" onclick="handleVisitorMicClick()" style="background: var(--surface-alt); color: var(--ink-muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 800; font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fas fa-microphone"></i> <span>طلب المايك</span>
+                        </button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <span id="visitorTimer" style="font-weight: 900; font-family: monospace; font-size: 0.9rem; color: var(--ink);">00:00</span>
+                        <div style="color: var(--accent); font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="openVisitorViewersList()">
+                            <i class="fas fa-users"></i> <span id="visitorViewersCount">0</span>
+                        </div>
+                        <button class="btn-close-modal" onclick="promptLeaveBroadcast()" style="padding: 4px 10px;"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <canvas id="visitorVisualizer" style="width: 100%; height: 12px;"></canvas>
+            </div>
+
+            <div id="visitorMediaContainer" style="display: none; width: 100%; background: #000; flex-shrink: 0; pointer-events: none;">
+                <div id="ytVisitorPlayer" style="width: 100%; height: 220px; display: none;"></div>
+                <div id="ytVisitorAudio" style="width: 100%; height: 80px; display: none; align-items: center; justify-content: center; color: #00d4ff; font-size: 2rem;">
+                    <i class="fas fa-music fade-anim"></i>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 15px; position: relative; background: transparent;">
+                
+                <div class="space-bg"></div>
+
+                <div class="chat-list" id="chatList"></div>
+                
+                <div class="chat-input-row">
+                    <input type="text" id="chatMsgInput" class="chat-input" placeholder="اكتب رسالتك...">
+                    <button class="chat-send-btn" onclick="sendChatMsg()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                
+            </div>
+
+        </div>
+    </div>
+
+    <div id="visitorViewersModal" class="modal-overlay" style="z-index: 10000;">
+        <div class="modal-box-viewers">
+            <h3 style="text-align: center; margin-bottom: 20px; font-weight: 900; color: var(--ink);"><i class="fas fa-users"></i> المشاهدين الآن</h3>
+            <div id="visitorViewersList" style="max-height: 250px; overflow-y: auto; color: var(--ink);"></div>
+            <button style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 10px; border: none; background: var(--surface-alt); color: var(--ink); font-weight: bold; cursor: pointer;" onclick="document.getElementById('visitorViewersModal').style.display='none'">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="leaveConfirmModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box-viewers" style="text-align: center; max-width: 320px;">
+            <div style="font-size: 3.5rem; color: #ef4444; margin-bottom: 15px;"><i class="fas fa-sign-out-alt"></i></div>
+            <h3 style="margin-bottom: 10px; font-weight: 900; color: var(--ink);">بدك تطلع من البث؟</h3>
+            <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.6;">إذا طلعت رح يوقف الصوت عندك، بس فيك ترجع إيمتى ما بدك بضغطة وحدة.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-live" style="flex:1; justify-content:center; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); border: none; color: white; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="confirmLeaveBroadcast()">خروج</button>
+                <button class="btn-interact" style="flex:1; justify-content:center; border: none; background: var(--surface-alt); color: var(--ink); padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="document.getElementById('leaveConfirmModal').style.display='none'">بقاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="micCancelConfirmModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box-viewers" style="text-align: center; max-width: 320px;">
+            <div style="font-size: 3.5rem; color: var(--warning); margin-bottom: 15px;"><i class="fas fa-microphone-slash"></i></div>
+            <h3 style="margin-bottom: 10px; font-weight: 900; color: var(--ink);">بدك تتخلى عن المايك؟</h3>
+            <p style="color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.6;">إذا أكدت، رح يتم إلغاء طلبك للحديث وتقدر ترجع تسمع بس.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-live" style="flex:1; justify-content:center; background: var(--warning); color: #000; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="confirmMicCancel()">إلغاء الطلب</button>
+                <button class="btn-interact" style="flex:1; justify-content:center; border: none; background: var(--surface-alt); color: var(--ink); padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="document.getElementById('micCancelConfirmModal').style.display='none'">تراجع</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><span class="toast-dot"></span> <span id="toast-msg"></span></div>
+
+    <script type="module" src="main.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/post/sw.js', { scope: '/post/' })
+                    .then(registration => {
+                        console.log('Visitor ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Visitor ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
