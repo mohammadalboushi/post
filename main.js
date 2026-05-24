@@ -55,7 +55,7 @@ function renderPosts(query = '') {
     let filtered = query ? allFetchedPosts.filter(p => (p.title||'').includes(query) || (p.content||'').includes(query)) : allFetchedPosts;
     
     const badge = document.getElementById('postCountBadge');
-    if(badge) badge.innerText = filtered.length + ' ';
+    if(badge) badge.innerText = filtered.length + ' Ù…Ù†Ø´ÙˆØ±';
     
     filtered.forEach(post => {
         const card = document.createElement('div'); 
@@ -66,7 +66,7 @@ function renderPosts(query = '') {
                     <span>${new Date(post.timestamp).toLocaleDateString('ar-EG')}</span>
                     <div style="display:flex; gap:10px; align-items:center;">
                         ${post.audioUrl ? `<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-play"></i> ${post.playCount || 0}</span>` : ''}
-                        ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i>  </button>` : ''}
+                        ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i> Ù†Ø³Ø® Ø§Ù„Ù†Øµ</button>` : ''}
                     </div>
                 </div>
                 ${post.title ? `<div class="post-title">${post.isPinned ? '<i class="fas fa-thumbtack" style="color:var(--pinned); margin-left:6px; font-size:0.9rem;"></i>' : ''}${post.title}</div>` : ''}
@@ -88,9 +88,9 @@ window.copyPostText = (id) => {
     const post = allFetchedPosts.find(p => p.id === id);
     if(post && post.content) {
         navigator.clipboard.writeText(post.content).then(() => {
-            showToast("   ! ");
+            showToast("ØªÙ… Ù†Ø³Ø® Ø§Ù„Ù†Øµ Ø¨Ù†Ø¬Ø§Ø­! ðŸ“‹");
         }).catch(err => {
-            showToast("   ");
+            showToast("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø¨Ø§Ù„Ù†Ø³Ø®");
         });
     }
 };
@@ -142,7 +142,7 @@ onValue(ref(db, 'liveData/status'), snap => {
 onValue(ref(db, `liveData/kicked/${visitorId}`), snap => {
     if(snap.exists()) {
         leaveBroadcast();
-        showToast("       .");
+        showToast("ØªÙ… Ø·Ø±Ø¯Ùƒ Ù…Ù† Ø§Ù„Ø¨Ø« Ù…Ù† Ù‚Ø¨Ù„ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.");
         remove(ref(db, `liveData/kicked/${visitorId}`)); 
     }
 });
@@ -167,17 +167,17 @@ window.joinBroadcast = async () => {
                         <i class="fas fa-headphones-alt" style="font-size: 2.2rem; color: var(--accent);"></i>
                     </div>
                     
-                    <h3 style="margin-bottom: 8px; font-weight: 900; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.02em;">  </h3>
-                    <p style="color: var(--ink-muted); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6;">  !      .</p>
+                    <h3 style="margin-bottom: 8px; font-weight: 900; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.02em;">ØªØ³Ø¬ÙŠÙ„ Ø¯Ø®ÙˆÙ„ Ù„Ù„Ø¨Ø«</h3>
+                    <p style="color: var(--ink-muted); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6;">Ø£Ù‡Ù„Ø§Ù‹ Ø¨Ùƒ! ÙŠØ±Ø¬Ù‰ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù…Ùƒ Ù„Ù„Ù…Ø´Ø§Ø±ÙƒØ©.</p>
                     
                     <div style="position: relative; margin-bottom: 24px;">
                         <i class="fas fa-user" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 1rem;"></i>
-                        <input type="text" id="tempNameInput" class="modern-input" placeholder=" ..." style="width: 100%; padding: 15px 42px 15px 15px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface-alt); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                        <input type="text" id="tempNameInput" class="modern-input" placeholder="Ø§ÙƒØªØ¨ Ø§Ø³Ù…Ùƒ Ù‡Ù†Ø§..." style="width: 100%; padding: 15px 42px 15px 15px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface-alt); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                     </div>
                     
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancelNameBtn" class="modern-btn-secondary" style="flex: 1; padding: 14px; border-radius: 16px; border: none; background: var(--surface-alt); color: var(--ink-muted); font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;"></button>
-                        <button id="confirmNameBtn" class="modern-btn-primary" style="flex: 1.5; padding: 14px; border-radius: 16px; border: none; background: var(--accent); color: white; font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 20px var(--accent-light); transition: 0.2s;">  <i class="fas fa-arrow-left" style="margin-right: 6px; font-size: 0.85rem;"></i></button>
+                        <button id="cancelNameBtn" class="modern-btn-secondary" style="flex: 1; padding: 14px; border-radius: 16px; border: none; background: var(--surface-alt); color: var(--ink-muted); font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;">Ø¥Ù„ØºØ§Ø¡</button>
+                        <button id="confirmNameBtn" class="modern-btn-primary" style="flex: 1.5; padding: 14px; border-radius: 16px; border: none; background: var(--accent); color: white; font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 20px var(--accent-light); transition: 0.2s;">Ø¯Ø®ÙˆÙ„ Ø§Ù„Ø¨Ø« <i class="fas fa-arrow-left" style="margin-right: 6px; font-size: 0.85rem;"></i></button>
                     </div>
                 </div>
             </div>
@@ -193,7 +193,7 @@ window.joinBroadcast = async () => {
                 namePrompt.remove();
                 executeJoin();
             } else {
-                showToast("   !");
+                showToast("Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… ØµØ§Ù„Ø­!");
             }
         };
     } else {
@@ -205,7 +205,7 @@ async function executeJoin() {
     const statusSnap = await get(ref(db, 'liveData/status'));
     const statusData = statusSnap.val();
     if (statusData && statusData.isHidden && !isListening) {
-        showToast("     ");
+        showToast("Ø§Ù„Ø¨Ø« Ù…Ø®ÙÙŠ Ø­Ø§Ù„ÙŠØ§Ù‹ØŒ Ù„Ø§ ÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…");
         return;
     }
 
@@ -240,14 +240,14 @@ async function executeJoin() {
 
         window.chatDisconnectRef = push(ref(db, 'liveData/chat'));
         onDisconnect(window.chatDisconnectRef).set({
-            senderId: 'system', name: '', text: `  ${visitorName} `, timestamp: { ".sv": "timestamp" }
+            senderId: 'system', name: 'Ø§Ù„Ø±Ø§Ø¯ÙŠÙˆ', text: `ØºØ§Ø¯Ø± ${visitorName} Ø§Ù„Ø¨Ø«`, timestamp: { ".sv": "timestamp" }
         });
 
         push(ref(db, 'liveData/chat'), {
-            senderId: 'system', name: '', text: `  ${visitorName} !`, timestamp: Date.now()
+            senderId: 'system', name: 'Ø§Ù„Ø±Ø§Ø¯ÙŠÙˆ', text: `Ø¯Ø®Ù„ ${visitorName} Ø¥Ù„Ù‰ Ø§Ù„Ø¨Ø«!`, timestamp: Date.now()
         });
 
-        showToast("    ");
+        showToast("ØªÙ… Ø¯Ø®ÙˆÙ„ Ø§Ù„Ø¨Ø« Ø¨Ù†Ø¬Ø§Ø­ ðŸŽ§");
         document.getElementById('btnHeaderJoin').style.display = 'none';
         document.getElementById('headerListeningControls').style.display = 'flex';
         
@@ -257,7 +257,7 @@ async function executeJoin() {
         
     } catch (e) { 
         console.error(e);
-        showToast(" "); 
+        showToast("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø¨Ø§Ù„Ø§ØªØµØ§Ù„"); 
     }
 }
 
@@ -312,7 +312,7 @@ window.leaveBroadcast = () => {
     if(window.chatDisconnectRef) onDisconnect(window.chatDisconnectRef).cancel();
     
     if(visitorName) {
-        push(ref(db, 'liveData/chat'), { senderId: 'system', name: '', text: `  ${visitorName} `, timestamp: Date.now() });
+        push(ref(db, 'liveData/chat'), { senderId: 'system', name: 'Ø§Ù„Ø±Ø§Ø¯ÙŠÙˆ', text: `ØºØ§Ø¯Ø± ${visitorName} Ø§Ù„Ø¨Ø«`, timestamp: Date.now() });
     }
 };
 
@@ -347,7 +347,7 @@ onValue(ref(db, 'liveData/viewers'), snap => {
                 vList.innerHTML += `<div style="padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold;"><i class="fas fa-user-circle" style="color: var(--ink-faint); margin-left: 5px;"></i> ${v.name}</div>`;
             });
         } else {
-            vList.innerHTML = '<div style="text-align:center; color: var(--ink-faint);">  </div>';
+            vList.innerHTML = '<div style="text-align:center; color: var(--ink-faint);">Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…Ø³ØªÙ…Ø¹ÙŠÙ†</div>';
         }
     }
 });
@@ -359,7 +359,7 @@ window.openVisitorViewersList = () => {
 window.sendChatMsg = () => {
     const inputField = document.getElementById('chatMsgInput');
     const msg = inputField.value.trim(); if(!msg) return;
-    push(ref(db, 'liveData/chat'), { senderId: visitorId, name: visitorName||"", text: msg, timestamp: Date.now() });
+    push(ref(db, 'liveData/chat'), { senderId: visitorId, name: visitorName||"Ø¶ÙŠÙ", text: msg, timestamp: Date.now() });
     inputField.value = '';
     inputField.focus(); 
 };
@@ -376,7 +376,7 @@ onValue(ref(db, 'liveData/chat'), snap => {
         if(isSystem) {
             list.innerHTML += `
                 <div class="chat-bubble system-bubble">
-                    <span class="chat-sender" style="color: var(--ink-muted);"><i class="fas fa-info-circle"></i> </span>
+                    <span class="chat-sender" style="color: var(--ink-muted);"><i class="fas fa-info-circle"></i> Ø§Ù„Ù†Ø¸Ø§Ù…</span>
                     <span class="chat-text" style="color: var(--ink-muted); font-size: 0.8rem;">${m.text}</span>
                 </div>
             `;
@@ -385,7 +385,7 @@ onValue(ref(db, 'liveData/chat'), snap => {
 
         list.innerHTML += `
             <div class="chat-bubble ${isMe ? 'mine' : ''}">
-                <span class="chat-sender" style="${isAdmin ? 'color: var(--danger);' : ''}">${isAdmin ? ' ' : ''}${m.name}</span>
+                <span class="chat-sender" style="${isAdmin ? 'color: var(--danger);' : ''}">${isAdmin ? 'ðŸ‘‘ ' : ''}${m.name}</span>
                 <span class="chat-text" style="${isAdmin ? 'color: var(--danger);' : ''}">${m.text}</span>
             </div>
         `;
@@ -397,16 +397,16 @@ let micStatus = 'none';
 window.handleVisitorMicClick = () => {
     if(micStatus === 'none') {
         if(!visitorName) {
-            showToast("      ");
+            showToast("ÙŠØ¬Ø¨ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù…Ùƒ Ù„Ø·Ù„Ø¨ Ø§Ù„Ù…Ø§ÙŠÙƒ");
             return;
         }
         set(ref(db, `liveData/requests/${visitorId}`), { name: visitorName, status: 'pending', timestamp: Date.now() });
         
         push(ref(db, 'liveData/chat'), {
-            senderId: 'system', name: '', text: ` ${visitorName}   !`, timestamp: Date.now()
+            senderId: 'system', name: 'Ø§Ù„Ø±Ø§Ø¯ÙŠÙˆ', text: `Ø·Ù„Ø¨ ${visitorName} Ø§Ù„ØªØ­Ø¯Ø« Ø¨Ø§Ù„Ù…Ø§ÙŠÙƒ!`, timestamp: Date.now()
         });
         
-        showToast("    ");
+        showToast("ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ø§Ù„Ù…Ø§ÙŠÙƒ");
     } else if(micStatus === 'pending' || micStatus === 'approved') {
         document.getElementById('micCancelConfirmModal').style.display = 'flex';
     }
@@ -417,10 +417,10 @@ window.confirmMicCancel = () => {
     remove(ref(db, `liveData/requests/${visitorId}`));
     
     push(ref(db, 'liveData/chat'), {
-        senderId: 'system', name: '', text: ` ${visitorName}   !`, timestamp: Date.now()
+        senderId: 'system', name: 'Ø§Ù„Ø±Ø§Ø¯ÙŠÙˆ', text: `Ø£Ù„ØºÙ‰ ${visitorName} Ø·Ù„Ø¨ Ø§Ù„Ù…Ø§ÙŠÙƒ!`, timestamp: Date.now()
     });
     
-    showToast("   ");
+    showToast("ØªÙ… Ø¥Ù„ØºØ§Ø¡ Ø·Ù„Ø¨ Ø§Ù„Ù…Ø§ÙŠÙƒ");
 };
 
 onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
@@ -432,12 +432,12 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--surface-alt)';
             micBtn.style.color = 'var(--ink-muted)';
             micBtn.style.borderColor = 'var(--border)';
-            micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span> </span>';
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>Ø·Ù„Ø¨ Ø§Ù„Ù…Ø§ÙŠÙƒ</span>';
         }
         if(localMicTrack){
             localMicTrack.close(); localMicTrack=null; 
             if(rtcClient) await rtcClient.unpublish(); 
-            showToast("     ");
+            showToast("ØªÙ… Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„Ù…Ø§ÙŠÙƒ Ù…Ù† Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©");
         } 
         return; 
     }
@@ -448,7 +448,7 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--warning)';
             micBtn.style.color = '#000';
             micBtn.style.borderColor = 'var(--warning)';
-            micBtn.innerHTML = '<i class="fas fa-hourglass-half"></i> <span> </span>';
+            micBtn.innerHTML = '<i class="fas fa-hourglass-half"></i> <span>Ù‚ÙŠØ¯ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±</span>';
         }
     } else if(data.status === 'approved') {
         micStatus = 'approved';
@@ -456,10 +456,10 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--success)';
             micBtn.style.color = '#fff';
             micBtn.style.borderColor = 'var(--success)';
-            micBtn.innerHTML = '<i class="fas fa-microphone-alt"></i> <span> </span>';
+            micBtn.innerHTML = '<i class="fas fa-microphone-alt"></i> <span>Ø§Ù„Ù…Ø§ÙŠÙƒ Ù…ÙØªÙˆØ­</span>';
         }
         if(!localMicTrack) {
-            showToast("   ! ");
+            showToast("ØªÙ… ÙØªØ­ Ø§Ù„Ù…Ø§ÙŠÙƒ Ù…Ø¹Ùƒ! ðŸŽ™ï¸");
             localMicTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: false, ANS: false });
             if(rtcClient) await rtcClient.publish([localMicTrack]);
         }
@@ -589,9 +589,9 @@ onValue(ref(db, 'liveData/requests'), snap => {
     const titleEl = document.getElementById('liveRoomTitle');
     if(titleEl) {
         if(guestName) {
-            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i>   & ${guestName}`;
+            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> Ø¨Ø« Ø£Ø¨Ùˆ ÙØ§ÙŠØ² & ${guestName}`;
         } else {
-            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i>  `;
+            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> Ø¨Ø« Ø£Ø¨Ùˆ ÙØ§ÙŠØ²`;
         }
     }
 });
