@@ -1,0 +1,26 @@
+{
+  "name": "إدارة الموقع والبث المباشر",
+  "short_name": "إدارة البث",
+  "id": "/post/admin/index.html",
+  "start_url": "/post/admin/index.html",
+  "scope": "/post/admin/",
+  "display": "standalone",
+  "background_color": "#0d0d0f",
+  "theme_color": "#ffffff",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
