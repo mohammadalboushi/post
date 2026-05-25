@@ -1,4 +1,4 @@
-const CACHE_NAME = 'visitor-cache-v666';
+const CACHE_NAME = 'visitor-cache-v667';
 
 // قائمة الملفات اللي رح تتخزن بتطبيق الزوار
 const urlsToCache = [
