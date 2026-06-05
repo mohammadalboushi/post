@@ -897,10 +897,23 @@ if(document.getElementById('startLiveBtn')) {
             let checkAdminGate = () => {
                 if(!isLive) return;
                 requestAnimationFrame(checkAdminGate);
+                
+                let baseMediaVol = parseInt(document.getElementById('mediaVolSlider') ? document.getElementById('mediaVolSlider').value : 50) / 100;
+                
+                // إذا كان المايك مكتوم، لا تنزل صوت الميديا أبداً وارجع للحجم الطبيعي
+                if (window.isAdminMuted) {
+                    if (isAdminTalking) {
+                        isAdminTalking = false; 
+                        liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.2); 
+                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 1.2); 
+                    }
+                    return;
+                }
+
                 const data = new Uint8Array(adminAnalyser.fftSize); adminAnalyser.getByteTimeDomainData(data); 
                 let maxVol = 0; for(let i=0; i<data.length; i++) { let vol = Math.abs(data[i] - 128); if(vol > maxVol) maxVol = vol; }
                 let threshold = (parseInt(document.getElementById('noiseSlider').value) / 100) * 40;
-                let baseMediaVol = parseInt(document.getElementById('mediaVolSlider') ? document.getElementById('mediaVolSlider').value : 50) / 100;
+                
                 if (maxVol > threshold) {
                     if (!isAdminTalking) {
                         isAdminTalking = true; liveNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.02); 
@@ -968,6 +981,7 @@ if(document.getElementById('startLiveBtn')) {
                     let guestAnalyser = liveAudioCtx.createAnalyser(); guestAnalyser.fftSize = 512; guestSourceNode.connect(guestAnalyser);
                     guestNoiseFilter = liveAudioCtx.createGain(); 
                     let checkGuestGate = () => {
+                        if (!isLive) return; // إيقاف الحلقة المفرغة عند إغلاق البث
                         requestAnimationFrame(checkGuestGate);
                         const data = new Uint8Array(guestAnalyser.fftSize); guestAnalyser.getByteTimeDomainData(data); 
                         let maxVol = 0; for(let i=0; i<data.length; i++) { let vol = Math.abs(data[i] - 128); if(vol > maxVol) maxVol = vol; }
@@ -1006,6 +1020,9 @@ function stopLive() {
     document.getElementById('liveIndicator').style.display = 'none'; document.getElementById('quickToolsRow').style.display = 'none';
     if(window.liveMediaRecorder && window.liveMediaRecorder.state !== 'inactive') window.liveMediaRecorder.stop();
     set(ref(db, 'liveData/status'), { isLive: false });
+    remove(ref(db, 'liveData/requests'));
+    remove(ref(db, 'liveData/viewers'));
+    remove(ref(db, 'liveData/media'));
 }
 if(document.getElementById('stopLiveBtn')) document.getElementById('stopLiveBtn').onclick = stopLive;
 
@@ -1043,9 +1060,18 @@ if(document.getElementById('duckSlider')) document.getElementById('duckSlider').
 if(document.getElementById('myRevSlider')) document.getElementById('myRevSlider').oninput = (e) => { const val = e.target.value; document.getElementById('myRevVal').innerText = val + '%'; if(liveWetGain) liveWetGain.gain.value = (val / 100) * 3; if(window.recNodes && window.recNodes.wetGain) window.recNodes.wetGain.gain.value = (val / 100) * 3; };
 if(document.getElementById('monitorSlider')) document.getElementById('monitorSlider').oninput = (e) => { const val = e.target.value; document.getElementById('monitorVal').innerText = val + '%'; if(liveMonitorGain) liveMonitorGain.gain.value = val / 100; if(window.recNodes && window.recNodes.monitorGain) window.recNodes.monitorGain.gain.value = val / 100; };
 
-window.sendAdminChat = () => { const input = document.getElementById('chatInput'); const msg = input.value.trim(); if(!msg) return; push(ref(db, 'liveData/chat'), { senderId: 'admin', name: 'المدير (أبو فايز)', text: msg, timestamp: Date.now() }); input.value = ''; };
+window.sendAdminChat = () => { const input = document.getElementById('chatInput'); const msg = input.value.trim(); if(!msg) return; push(ref(db, 'liveData/chat'), { senderId: 'admin', name: 'المدير (أبو فايز)', text: msg, timestamp: Date.now() }); input.value = ''; input.focus(); }; // ضفنا input.focus() عشان يضل الكيبورد فاتح
 window.clearChat = () => { if(confirm("هل أنت متأكد من مسح الدردشة نهائياً للكل؟")) { remove(ref(db, 'liveData/chat')); showToast("تم مسح المحادثات"); } };
-onValue(ref(db, 'liveData/chat'), (snap) => { const data = snap.val(); const chatArea = document.getElementById('chatArea'); if(!chatArea) return; chatArea.innerHTML = ''; if(data) { Object.values(data).sort((a,b) => a.timestamp - b.timestamp).forEach(msg => { const isAdmin = msg.senderId === 'admin'; chatArea.innerHTML += `<div class="chat-msg" style="background: ${isAdmin ? 'var(--accent-glow)' : 'var(--surface-2)'};"><span class="name" style="color: ${isAdmin ? 'var(--accent)' : 'var(--ink)'};">${isAdmin ? '👑' : ''} ${msg.name}:</span><span>${msg.text}</span></div>`; }); chatArea.scrollTop = chatArea.scrollHeight; } else { chatArea.innerHTML = '<div style="text-align: center; color: var(--ink-faint); margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>'; } });
+onValue(ref(db, 'liveData/chat'), (snap) => { const data = snap.val(); const chatArea = document.getElementById('chatArea'); if(!chatArea) return; if(data) { let html = ''; Object.values(data).sort((a,b) => a.timestamp - b.timestamp).slice(-100).forEach(msg => { 
+    const isAdmin = msg.senderId === 'admin';
+    const isSystem = msg.senderId === 'system';
+    if(isSystem) {
+        html += `<div class="chat-msg" style="background: rgba(0, 255, 128, 0.1); border: 1px dashed rgba(0, 255, 128, 0.3); align-self: flex-start; max-width: 85%;"><span class="name" style="color: #00ff80; text-shadow: 0 0 5px rgba(0,255,128,0.5);"><i class="fas fa-info-circle"></i> النظام:</span> <span style="color: #e6ffec; font-weight: bold;">${msg.text}</span></div>`;
+    } else {
+        html += `<div class="chat-msg" style="background: ${isAdmin ? 'rgba(0, 212, 255, 0.15)' : 'rgba(20, 22, 30, 0.85)'}; border: 1px solid ${isAdmin ? 'rgba(0, 212, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)'}; align-self: ${isAdmin ? 'flex-end' : 'flex-start'}; max-width: 85%;"><span class="name" style="color: ${isAdmin ? '#ff0055' : '#00d4ff'}; text-shadow: ${isAdmin ? '0 0 8px rgba(255, 0, 85, 0.6)' : 'none'};">${isAdmin ? '👑' : ''} ${msg.name}:</span> <span style="color: ${isAdmin ? '#ffb3c6' : '#eee'}; font-weight: bold;">${msg.text}</span></div>`;
+    }
+}); chatArea.innerHTML = html; chatArea.scrollTop = chatArea.scrollHeight; } else { chatArea.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); margin-top: 20px;">الدردشة فارغة. ابدأ البث للتواصل.</div>'; } }); 
+// تم تغيير طريقة بناء الـ html وتقييد الرندر لآخر 100 رسالة لحل مشكلة التهنيج الجذري
 
 window.isAdminMuted = false;
 window.toggleAdminMute = () => {
