@@ -55,7 +55,7 @@ function renderPosts(query = '') {
     let filtered = query ? allFetchedPosts.filter(p => (p.title||'').includes(query) || (p.content||'').includes(query)) : allFetchedPosts;
     
     const badge = document.getElementById('postCountBadge');
-    if(badge) badge.innerText = filtered.length + ' منشور';
+    if(badge) badge.innerText = filtered.length + ' Post(s)';
     
     filtered.forEach(post => {
         const card = document.createElement('div'); 
@@ -63,10 +63,10 @@ function renderPosts(query = '') {
         card.innerHTML = `
             <div class="card-body">
                 <div style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>${new Date(post.timestamp).toLocaleDateString('ar-EG')}</span>
+                    <span>${new Date(post.timestamp).toLocaleDateString('en-US')}</span>
                     <div style="display:flex; gap:10px; align-items:center;">
                         ${post.audioUrl ? `<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-play"></i> ${post.playCount || 0}</span>` : ''}
-                        ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i> نسخ النص</button>` : ''}
+                        ${post.content ? `<button onclick="copyPostText('${post.id}')" style="background:var(--surface-alt); border:1px solid var(--border); color:var(--ink-muted); padding:6px 12px; border-radius:50px; font-family:inherit; font-weight:bold; cursor:pointer; font-size:0.75rem; transition:0.2s;"><i class="far fa-copy"></i> Copy Text</button>` : ''}
                     </div>
                 </div>
                 ${post.title ? `<div class="post-title">${post.isPinned ? '<i class="fas fa-thumbtack" style="color:var(--pinned); margin-left:6px; font-size:0.9rem;"></i>' : ''}${post.title}</div>` : ''}
@@ -88,9 +88,9 @@ window.copyPostText = (id) => {
     const post = allFetchedPosts.find(p => p.id === id);
     if(post && post.content) {
         navigator.clipboard.writeText(post.content).then(() => {
-            showToast("تم نسخ النص بنجاح! 📋");
+            showToast("Text copied successfully! ");
         }).catch(err => {
-            showToast("حدث خطأ بالنسخ");
+            showToast("Error copying text");
         });
     }
 };
@@ -142,7 +142,7 @@ onValue(ref(db, 'liveData/status'), snap => {
 onValue(ref(db, `liveData/kicked/${visitorId}`), snap => {
     if(snap.exists()) {
         leaveBroadcast();
-        showToast("تم طردك من البث من قبل الإدارة.");
+        showToast("You have been kicked from the broadcast by the admin.");
         remove(ref(db, `liveData/kicked/${visitorId}`)); 
     }
 });
@@ -167,17 +167,17 @@ window.joinBroadcast = async () => {
                         <i class="fas fa-headphones-alt" style="font-size: 2.2rem; color: var(--accent);"></i>
                     </div>
                     
-                    <h3 style="margin-bottom: 8px; font-weight: 900; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.02em;">تسجيل دخول للبث</h3>
-                    <p style="color: var(--ink-muted); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6;">أهلاً بك! يرجى إدخال اسمك للمشاركة.</p>
+                    <h3 style="margin-bottom: 8px; font-weight: 900; font-size: 1.4rem; color: var(--ink); letter-spacing: -0.02em;">Join Broadcast</h3>
+                    <p style="color: var(--ink-muted); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6;">Welcome! Please enter your name to join.</p>
                     
                     <div style="position: relative; margin-bottom: 24px;">
                         <i class="fas fa-user" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 1rem;"></i>
-                        <input type="text" id="tempNameInput" class="modern-input" placeholder="اكتب اسمك هنا..." style="width: 100%; padding: 15px 42px 15px 15px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface-alt); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                        <input type="text" id="tempNameInput" class="modern-input" placeholder="Enter your name here..." style="width: 100%; padding: 15px 42px 15px 15px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface-alt); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                     </div>
                     
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancelNameBtn" class="modern-btn-secondary" style="flex: 1; padding: 14px; border-radius: 16px; border: none; background: var(--surface-alt); color: var(--ink-muted); font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;">إلغاء</button>
-                        <button id="confirmNameBtn" class="modern-btn-primary" style="flex: 1.5; padding: 14px; border-radius: 16px; border: none; background: var(--accent); color: white; font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 20px var(--accent-light); transition: 0.2s;">دخول البث <i class="fas fa-arrow-left" style="margin-right: 6px; font-size: 0.85rem;"></i></button>
+                        <button id="cancelNameBtn" class="modern-btn-secondary" style="flex: 1; padding: 14px; border-radius: 16px; border: none; background: var(--surface-alt); color: var(--ink-muted); font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;">Cancel</button>
+                        <button id="confirmNameBtn" class="modern-btn-primary" style="flex: 1.5; padding: 14px; border-radius: 16px; border: none; background: var(--accent); color: white; font-family: inherit; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 20px var(--accent-light); transition: 0.2s;">Join <i class="fas fa-arrow-left" style="margin-right: 6px; font-size: 0.85rem;"></i></button>
                     </div>
                 </div>
             </div>
@@ -193,7 +193,7 @@ window.joinBroadcast = async () => {
                 namePrompt.remove();
                 executeJoin();
             } else {
-                showToast("الرجاء إدخال اسم صالح!");
+                showToast("Please enter a valid name!");
             }
         };
     } else {
@@ -205,7 +205,7 @@ async function executeJoin() {
     const statusSnap = await get(ref(db, 'liveData/status'));
     const statusData = statusSnap.val();
     if (statusData && statusData.isHidden && !isListening) {
-        showToast("البث مخفي حالياً، لا يمكنك الانضمام");
+        showToast("Broadcast is currently hidden, you cannot join.");
         return;
     }
 
@@ -232,7 +232,7 @@ async function executeJoin() {
         await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, visitorId);
         isListening = true;
         
-                localStorage.setItem('myRadioVisitorName', visitorName);
+        localStorage.setItem('myRadioVisitorName', visitorName);
         
         const connectedRef = ref(db, '.info/connected');
         if(window.presenceListener) window.presenceListener(); 
@@ -246,17 +246,16 @@ async function executeJoin() {
                 if (window.chatDisconnectRef) onDisconnect(window.chatDisconnectRef).cancel();
                 window.chatDisconnectRef = push(ref(db, 'liveData/chat'));
                 onDisconnect(window.chatDisconnectRef).set({
-                    senderId: 'system', name: '', text: ` ${visitorName} `, timestamp: { ".sv": "timestamp" }
+                    senderId: 'system', name: 'System', text: `${visitorName} left the broadcast`, timestamp: { ".sv": "timestamp" }
                 });
             }
         });
 
         push(ref(db, 'liveData/chat'), {
-            senderId: 'system', name: '', text: ` ${visitorName}  !`, timestamp: Date.now()
+            senderId: 'system', name: 'System', text: `${visitorName} joined the broadcast!`, timestamp: Date.now()
         });
 
-
-        showToast("تم دخول البث بنجاح 🎧");
+        showToast("Successfully joined the broadcast ");
         document.getElementById('btnHeaderJoin').style.display = 'none';
         document.getElementById('headerListeningControls').style.display = 'flex';
         
@@ -266,7 +265,7 @@ async function executeJoin() {
         
     } catch (e) { 
         console.error(e);
-        showToast("حدث خطأ بالاتصال"); 
+        showToast("Connection error occurred"); 
     }
 }
 
@@ -323,10 +322,9 @@ window.leaveBroadcast = () => {
     if(window.chatDisconnectRef) onDisconnect(window.chatDisconnectRef).cancel();
     
     if(visitorName) {
-        push(ref(db, 'liveData/chat'), { senderId: 'system', name: '', text: ` ${visitorName} `, timestamp: Date.now() });
+        push(ref(db, 'liveData/chat'), { senderId: 'system', name: 'System', text: `${visitorName} left the broadcast`, timestamp: Date.now() });
     }
 };
-
 
 window.promptLeaveBroadcast = () => {
     document.getElementById('leaveConfirmModal').style.display = 'flex';
@@ -359,7 +357,7 @@ onValue(ref(db, 'liveData/viewers'), snap => {
                 vList.innerHTML += `<div style="padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold;"><i class="fas fa-user-circle" style="color: var(--ink-faint); margin-left: 5px;"></i> ${v.name}</div>`;
             });
         } else {
-            vList.innerHTML = '<div style="text-align:center; color: var(--ink-faint);">لا يوجد مستمعين</div>';
+            vList.innerHTML = '<div style="text-align:center; color: var(--ink-faint);">No listeners currently</div>';
         }
     }
 });
@@ -371,7 +369,7 @@ window.openVisitorViewersList = () => {
 window.sendChatMsg = () => {
     const inputField = document.getElementById('chatMsgInput');
     const msg = inputField.value.trim(); if(!msg) return;
-    push(ref(db, 'liveData/chat'), { senderId: visitorId, name: visitorName||"ضيف", text: msg, timestamp: Date.now() });
+    push(ref(db, 'liveData/chat'), { senderId: visitorId, name: visitorName||"Guest", text: msg, timestamp: Date.now() });
     inputField.value = '';
     inputField.focus(); 
 };
@@ -388,7 +386,7 @@ onValue(ref(db, 'liveData/chat'), snap => {
         if(isSystem) {
             list.innerHTML += `
                 <div class="chat-bubble system-bubble">
-                    <span class="chat-sender" style="color: var(--ink-muted);"><i class="fas fa-info-circle"></i> النظام</span>
+                    <span class="chat-sender" style="color: var(--ink-muted);"><i class="fas fa-info-circle"></i> System</span>
                     <span class="chat-text" style="color: var(--ink-muted); font-size: 0.8rem;">${m.text}</span>
                 </div>
             `;
@@ -397,7 +395,7 @@ onValue(ref(db, 'liveData/chat'), snap => {
 
         list.innerHTML += `
             <div class="chat-bubble ${isMe ? 'mine' : ''}">
-                <span class="chat-sender" style="${isAdmin ? 'color: var(--danger);' : ''}">${isAdmin ? '👑 ' : ''}${m.name}</span>
+                <span class="chat-sender" style="${isAdmin ? 'color: var(--danger);' : ''}">${isAdmin ? ' ' : ''}${m.name}</span>
                 <span class="chat-text" style="${isAdmin ? 'color: var(--danger);' : ''}">${m.text}</span>
             </div>
         `;
@@ -409,16 +407,16 @@ let micStatus = 'none';
 window.handleVisitorMicClick = () => {
     if(micStatus === 'none') {
         if(!visitorName) {
-            showToast("يجب إدخال اسمك لطلب المايك");
+            showToast("You must enter your name to request the mic");
             return;
         }
         set(ref(db, `liveData/requests/${visitorId}`), { name: visitorName, status: 'pending', timestamp: Date.now() });
         
         push(ref(db, 'liveData/chat'), {
-            senderId: 'system', name: 'الراديو', text: `طلب ${visitorName} التحدث بالمايك!`, timestamp: Date.now()
+            senderId: 'system', name: 'System', text: `${visitorName} requested the mic!`, timestamp: Date.now()
         });
         
-        showToast("تم إرسال طلب المايك");
+        showToast("Mic request sent");
     } else if(micStatus === 'pending' || micStatus === 'approved') {
         document.getElementById('micCancelConfirmModal').style.display = 'flex';
     }
@@ -429,10 +427,10 @@ window.confirmMicCancel = () => {
     remove(ref(db, `liveData/requests/${visitorId}`));
     
     push(ref(db, 'liveData/chat'), {
-        senderId: 'system', name: 'الراديو', text: `ألغى ${visitorName} طلب المايك!`, timestamp: Date.now()
+        senderId: 'system', name: 'System', text: `${visitorName} canceled the mic request!`, timestamp: Date.now()
     });
     
-    showToast("تم إلغاء طلب المايك");
+    showToast("Mic request canceled");
 };
 
 onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
@@ -444,12 +442,12 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--surface-alt)';
             micBtn.style.color = 'var(--ink-muted)';
             micBtn.style.borderColor = 'var(--border)';
-            micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>طلب المايك</span>';
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i> <span>Request Mic</span>';
         }
         if(localMicTrack){
             localMicTrack.close(); localMicTrack=null; 
             if(rtcClient) await rtcClient.unpublish(); 
-            showToast("تم إغلاق المايك من الإدارة");
+            showToast("Mic closed by admin");
         } 
         return; 
     }
@@ -460,7 +458,7 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--warning)';
             micBtn.style.color = '#000';
             micBtn.style.borderColor = 'var(--warning)';
-            micBtn.innerHTML = '<i class="fas fa-hourglass-half"></i> <span>قيد الانتظار</span>';
+            micBtn.innerHTML = '<i class="fas fa-hourglass-half"></i> <span>Pending</span>';
         }
     } else if(data.status === 'approved') {
         micStatus = 'approved';
@@ -468,10 +466,10 @@ onValue(ref(db, `liveData/requests/${visitorId}`), async snap => {
             micBtn.style.background = 'var(--success)';
             micBtn.style.color = '#fff';
             micBtn.style.borderColor = 'var(--success)';
-            micBtn.innerHTML = '<i class="fas fa-microphone-alt"></i> <span>المايك مفتوح</span>';
+            micBtn.innerHTML = '<i class="fas fa-microphone-alt"></i> <span>Mic Open</span>';
         }
         if(!localMicTrack) {
-            showToast("تم فتح المايك معك! 🎙️");
+            showToast("Mic is now open! ");
             localMicTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: false, ANS: false });
             if(rtcClient) await rtcClient.publish([localMicTrack]);
         }
@@ -601,9 +599,9 @@ onValue(ref(db, 'liveData/requests'), snap => {
     const titleEl = document.getElementById('liveRoomTitle');
     if(titleEl) {
         if(guestName) {
-            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> بث أبو فايز & ${guestName}`;
+            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> Abu Fayez Broadcast & ${guestName}`;
         } else {
-            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> بث أبو فايز`;
+            titleEl.innerHTML = `<i class="fas fa-broadcast-tower" style="color: var(--danger);"></i> Abu Fayez Broadcast`;
         }
     }
 });
