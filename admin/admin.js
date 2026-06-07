@@ -898,14 +898,13 @@ if(document.getElementById('startLiveBtn')) {
                 if(!isLive) return;
                 requestAnimationFrame(checkAdminGate);
                 
-                let baseMediaVol = parseInt(document.getElementById('mediaVolSlider') ? document.getElementById('mediaVolSlider').value : 50) / 100;
+                let baseMediaVol = (parseInt(document.getElementById('mediaVolSlider') ? document.getElementById('mediaVolSlider').value : 50) / 100) * 2;
                 
-                // إذا كان المايك مكتوم، لا تنزل صوت الميديا أبداً وارجع للحجم الطبيعي
                 if (window.isAdminMuted) {
                     if (isAdminTalking) {
                         isAdminTalking = false; 
                         liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.2); 
-                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 1.2); 
+                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 0.2); 
                     }
                     return;
                 }
@@ -917,13 +916,12 @@ if(document.getElementById('startLiveBtn')) {
                 if (maxVol > threshold) {
                     if (!isAdminTalking) {
                         isAdminTalking = true; liveNoiseFilter.gain.setTargetAtTime(1, liveAudioCtx.currentTime, 0.02); 
-                        let duckStrength = parseInt(document.getElementById('duckSlider') ? document.getElementById('duckSlider').value : 80) / 100;
-                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol * (1 - duckStrength), liveAudioCtx.currentTime, 0.15); 
+                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 0.15); 
                     }
                 } else {
                     if (isAdminTalking) {
                         isAdminTalking = false; liveNoiseFilter.gain.setTargetAtTime(0, liveAudioCtx.currentTime, 0.2); 
-                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 1.2); 
+                        if(window.liveMediaGain) window.liveMediaGain.gain.setTargetAtTime(baseMediaVol, liveAudioCtx.currentTime, 0.2); 
                     }
                 }
             };
@@ -940,7 +938,7 @@ if(document.getElementById('startLiveBtn')) {
             liveMasterGain.connect(liveDest); liveMasterGain.connect(liveMonitorGain); liveMonitorGain.connect(liveAudioCtx.destination);
 
             if (typeof window.liveMediaGain === 'undefined') window.liveMediaGain = liveAudioCtx.createGain();
-            window.liveMediaGain.gain.value = parseInt(document.getElementById('mediaVolSlider').value || 50) / 100;
+            window.liveMediaGain.gain.value = (parseInt(document.getElementById('mediaVolSlider').value || 50) / 100) * 2;
             window.liveMediaGain.connect(liveDest); window.liveMediaGain.connect(liveMonitorGain); window.liveMediaGain.connect(liveAudioCtx.destination);
             
             const localPlayer = document.getElementById('localAudioPlayer');
@@ -1051,7 +1049,7 @@ if(document.getElementById('stopRecordLiveBtn')) {
 function startTimer() { liveTimerInterval = setInterval(() => { seconds++; document.getElementById('liveTimer').innerText = `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; }, 1000); }
 
 if(document.getElementById('myVolSlider')) document.getElementById('myVolSlider').oninput = (e) => { const val = e.target.value; document.getElementById('myVolVal').innerText = val + '%'; if(liveMasterGain) liveMasterGain.gain.value = val / 100; if(window.recNodes && window.recNodes.masterGain) window.recNodes.masterGain.gain.value = val / 100; };
-if(document.getElementById('mediaVolSlider')) document.getElementById('mediaVolSlider').oninput = (e) => { const val = parseInt(e.target.value); document.getElementById('mediaVolVal').innerText = val + '%'; if (window.liveMediaGain) window.liveMediaGain.gain.value = val / 100; if(typeof ytPlayerAdmin !== 'undefined' && ytPlayerAdmin && ytPlayerAdmin.setVolume) try { ytPlayerAdmin.setVolume(val); } catch(err){} if(isLive) update(ref(db, 'liveData/media'), { volume: val }); };
+if(document.getElementById('mediaVolSlider')) document.getElementById('mediaVolSlider').oninput = (e) => { const val = parseInt(e.target.value); document.getElementById('mediaVolVal').innerText = val + '%'; if (window.liveMediaGain) window.liveMediaGain.gain.value = (val / 100) * 2; if(typeof ytPlayerAdmin !== 'undefined' && ytPlayerAdmin && ytPlayerAdmin.setVolume) try { ytPlayerAdmin.setVolume(val); } catch(err){} if(isLive) update(ref(db, 'liveData/media'), { volume: val }); };
 if(document.getElementById('noiseSlider')) document.getElementById('noiseSlider').oninput = (e) => { document.getElementById('noiseVal').innerText = e.target.value + '%'; };
 if(document.getElementById('airSlider')) document.getElementById('airSlider').oninput = (e) => { const val = e.target.value; document.getElementById('airVal').innerText = val + '%'; if(window.liveAirHpf && window.liveAirLpf && liveAudioCtx) { window.liveAirHpf.frequency.setTargetAtTime(20 + (val / 100) * 350, liveAudioCtx.currentTime, 0.05); window.liveAirLpf.frequency.setTargetAtTime(20000 - (val / 100) * 16000, liveAudioCtx.currentTime, 0.05); } if(window.recNodes && window.recNodes.airHpf && window.recNodes.airLpf && audioCtx) { window.recNodes.airHpf.frequency.setTargetAtTime(20 + (val / 100) * 350, audioCtx.currentTime, 0.05); window.recNodes.airLpf.frequency.setTargetAtTime(20000 - (val / 100) * 16000, audioCtx.currentTime, 0.05); } };
 if(document.getElementById('bassSlider')) document.getElementById('bassSlider').oninput = (e) => { const val = e.target.value; document.getElementById('bassVal').innerText = val + '%'; if(window.liveRadioEQ) window.liveRadioEQ.gain.value = (val / 100) * 12; if(window.recNodes && window.recNodes.eq) window.recNodes.eq.gain.value = (val / 100) * 12; };
@@ -1193,14 +1191,14 @@ window.toggleGlobalMediaPlayPause = () => {
                     } else {
                         clearInterval(fadeOut);
                         localPlayer.pause();
-                        window.liveMediaGain.gain.value = parseInt(document.getElementById('mediaVolSlider').value || 50) / 100;
+                        window.liveMediaGain.gain.value = (parseInt(document.getElementById('mediaVolSlider').value || 50) / 100) * 2;
                         pauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                     }
                 }, 50);
             } else {
                 window.liveMediaGain.gain.value = 0;
                 localPlayer.play();
-                let target = parseInt(document.getElementById('mediaVolSlider').value || 50) / 100;
+                let target = (parseInt(document.getElementById('mediaVolSlider').value || 50) / 100) * 2;
                 let fadeIn = setInterval(() => {
                     if (window.liveMediaGain.gain.value < target - 0.05) {
                         window.liveMediaGain.gain.value += 0.05;
