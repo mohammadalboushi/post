@@ -232,20 +232,29 @@ async function executeJoin() {
         await rtcClient.join(AGORA_APP_ID, "abu_fayez_radio", null, visitorId);
         isListening = true;
         
-        localStorage.setItem('myRadioVisitorName', visitorName);
+                localStorage.setItem('myRadioVisitorName', visitorName);
         
-        const viewerRef = ref(db, 'liveData/viewers/' + visitorId);
-        set(viewerRef, { name: visitorName, joinedAt: Date.now() });
-        onDisconnect(viewerRef).remove();
+        const connectedRef = ref(db, '.info/connected');
+        if(window.presenceListener) window.presenceListener(); 
+        
+        window.presenceListener = onValue(connectedRef, (snap) => {
+            if (snap.val() === true && isListening) {
+                const viewerRef = ref(db, 'liveData/viewers/' + visitorId);
+                set(viewerRef, { name: visitorName, joinedAt: Date.now() });
+                onDisconnect(viewerRef).remove();
 
-        window.chatDisconnectRef = push(ref(db, 'liveData/chat'));
-        onDisconnect(window.chatDisconnectRef).set({
-            senderId: 'system', name: 'الراديو', text: `غادر ${visitorName} البث`, timestamp: { ".sv": "timestamp" }
+                if (window.chatDisconnectRef) onDisconnect(window.chatDisconnectRef).cancel();
+                window.chatDisconnectRef = push(ref(db, 'liveData/chat'));
+                onDisconnect(window.chatDisconnectRef).set({
+                    senderId: 'system', name: '', text: ` ${visitorName} `, timestamp: { ".sv": "timestamp" }
+                });
+            }
         });
 
         push(ref(db, 'liveData/chat'), {
-            senderId: 'system', name: 'الراديو', text: `دخل ${visitorName} إلى البث!`, timestamp: Date.now()
+            senderId: 'system', name: '', text: ` ${visitorName}  !`, timestamp: Date.now()
         });
+
 
         showToast("تم دخول البث بنجاح 🎧");
         document.getElementById('btnHeaderJoin').style.display = 'none';
@@ -297,6 +306,8 @@ window.leaveBroadcast = () => {
     if(rtcClient) rtcClient.leave();
     isListening = false;
     
+    if(window.presenceListener) { window.presenceListener(); window.presenceListener = null; } 
+    
     if(isBroadcastHiddenGlobal) {
         document.getElementById('headerLiveControls').style.display = 'none';
     } else {
@@ -312,9 +323,10 @@ window.leaveBroadcast = () => {
     if(window.chatDisconnectRef) onDisconnect(window.chatDisconnectRef).cancel();
     
     if(visitorName) {
-        push(ref(db, 'liveData/chat'), { senderId: 'system', name: 'الراديو', text: `غادر ${visitorName} البث`, timestamp: Date.now() });
+        push(ref(db, 'liveData/chat'), { senderId: 'system', name: '', text: ` ${visitorName} `, timestamp: Date.now() });
     }
 };
+
 
 window.promptLeaveBroadcast = () => {
     document.getElementById('leaveConfirmModal').style.display = 'flex';
